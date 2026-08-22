@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ポケモン バトルシミュレーター</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- 1. LOGIN / REGISTER SCREEN -->
+        <div id="login-screen" class="screen active">
+            <div class="card login-card">
+                <h1 class="game-title">POKÉMON OGIRI</h1>
+                
+                <div id="login-form-container">
+                    <div class="input-group">
+                        <label for="login-id-input">ユーザーID</label>
+                        <input type="text" id="login-id-input" placeholder="ローマ字4文字以上を入力" autocomplete="off">
+                    </div>
+                    <button id="login-btn" class="btn primary-btn">入場する</button>
+                    <p class="switch-prompt">アカウントをお持ちでないですか？ <span id="go-to-register" class="link-text">新規登録</span></p>
+                </div>
+
+                <div id="register-form-container" class="hidden">
+                    <div class="input-group">
+                        <label for="register-id-input">新規ユーザーID</label>
+                        <input type="text" id="register-id-input" placeholder="ローマ字4文字以上限定" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label for="register-name-input">名前:</label>
+                        <input type="text" id="register-name-input" value="西川" placeholder="例：西川" autocomplete="off">
+                        <span class="input-note">※名前は部内で浸透してる名前にしてください</span>
+                    </div>
+                    <button id="register-btn" class="btn success-btn">アカウントを作成</button>
+                    <p class="switch-prompt">既にアカウントをお持ちですか？ <span id="go-to-login" class="link-text">ログイン</span></p>
+                </div>
+                <div id="auth-error" class="error-msg hidden"></div>
+            </div>
+        </div>
+
+        <!-- 2. CHOICE SCREEN -->
+        <div id="choice-screen" class="screen">
+            <div class="card choice-card">
+                <h2>希望ポケモン選択</h2>
+                <p class="instruction">第1希望から第5希望まで、異なるポケモンを選択してください。（すべて必須入力）</p>
+                
+                <div class="choices-grid">
+                    <div class="choice-row">
+                        <label>第1希望</label>
+                        <select id="wish-1" class="wish-select"><option value="">選択してください</option></select>
+                    </div>
+                    <div class="choice-row">
+                        <label>第2希望</label>
+                        <select id="wish-2" class="wish-select"><option value="">選択してください</option></select>
+                    </div>
+                    <div class="choice-row">
+                        <label>第3希望</label>
+                        <select id="wish-3" class="wish-select"><option value="">選択してください</option></select>
+                    </div>
+                    <div class="choice-row">
+                        <label>第4希望</label>
+                        <select id="wish-4" class="wish-select"><option value="">選択してください</option></select>
+                    </div>
+                    <div class="choice-row">
+                        <label>第5希望</label>
+                        <select id="wish-5" class="wish-select"><option value="">選択してください</option></select>
+                    </div>
+                </div>
+
+                <button id="submit-wishes-btn" class="btn primary-btn" disabled>希望を送信する</button>
+                <div id="choice-error" class="error-msg hidden"></div>
+            </div>
+        </div>
+
+        <!-- 3. WAITING SCREEN -->
+        <div id="waiting-screen" class="screen">
+            <div class="card waiting-card">
+                <div class="spinner"></div>
+                <h2>全員の回答が出そろうまで少々お待ちください。</h2>
+                <p class="status-sub">管理者がExcelにあなたのポケモンを割り当てています...</p>
+                <div class="user-id-badge">ID: <span id="waiting-username"></span></div>
+            </div>
+        </div>
+
+        <!-- 4. GET POKEMON CELEBRATION SCREEN -->
+        <div id="get-screen" class="screen">
+            <div class="card get-card">
+                <h2 class="celebration-title">CONGRATULATIONS!</h2>
+                <p class="get-message">管理者の承認が完了し、以下のポケモンを入手しました！</p>
+                
+                <div class="obtained-container">
+                    <div class="obtained-poke-card" id="obtained-1">
+                        <div class="poke-icon">⚡</div>
+                        <div class="poke-name" id="obtained-name-1">-</div>
+                    </div>
+                    <div class="obtained-poke-card" id="obtained-2">
+                        <div class="poke-icon">💧</div>
+                        <div class="poke-name" id="obtained-name-2">-</div>
+                    </div>
+                </div>
+
+                <button id="start-game-btn" class="btn primary-btn pulse">ゲームを始める</button>
+            </div>
+        </div>
+
+        <!-- 5. MAIN TABBED SCREEN -->
+        <div id="main-screen" class="screen">
+            <!-- Content Area (Top part) -->
+            <div id="tab-content-container">
+                <!-- Tab 1: つよさ -->
+                <div id="tab-strength" class="tab-content">
+                    <!-- A. Overview View -->
+                    <div id="strength-overview" class="strength-subview active-subview">
+                        <div class="strength-list-container">
+                            <div class="strength-pokemon-card" id="strength-poke-0" data-idx="0">
+                                <div class="strength-poke-tag">1st</div>
+                                <div class="strength-poke-emoji" id="strength-poke-emoji-0">👾</div>
+                                <div class="strength-poke-name" id="strength-poke-name-0">-</div>
+                            </div>
+                            
+                            <div class="strength-swap-container">
+                                <button id="strength-swap-btn" class="circle-btn">
+                                    <span class="swap-icon">⇄</span>
+                                    <span class="swap-lbl">入れ替え</span>
+                                </button>
+                            </div>
+                            
+                            <div class="strength-pokemon-card" id="strength-poke-1" data-idx="1">
+                                <div class="strength-poke-tag">2nd</div>
+                                <div class="strength-poke-emoji" id="strength-poke-emoji-1">👾</div>
+                                <div class="strength-poke-name" id="strength-poke-name-1">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- B. Detail View (Status / Moves) -->
+                    <div id="strength-detail" class="strength-subview hidden">
+                        <!-- B1. Status Subview -->
+                        <div id="strength-detail-status" class="detail-mode-view">
+                            <div class="detail-split-container">
+                                <div class="detail-left-half">
+                                    <h3 class="detail-sec-title">ステータス</h3>
+                                    <ul class="status-list">
+                                        <li><span>HP</span> <span id="detail-hp" class="status-val">-</span></li>
+                                        <li><span>攻撃</span> <span id="detail-attack" class="status-val">-</span></li>
+                                        <li><span>防御</span> <span id="detail-defense" class="status-val">-</span></li>
+                                        <li><span>特攻</span> <span id="detail-sp-attack" class="status-val">-</span></li>
+                                        <li><span>特防</span> <span id="detail-sp-defense" class="status-val">-</span></li>
+                                    </ul>
+                                </div>
+                                <div class="detail-right-half">
+                                    <div id="detail-sprite-container" style="display: flex; justify-content: center; margin-bottom: 10px;">
+                                        <div id="detail-sprite" class="pokemon-sprite"></div>
+                                    </div>
+                                    <div class="detail-row"><span class="detail-label">名前</span><span id="detail-name" class="detail-val">-</span></div>
+                                    <div class="detail-row"><span class="detail-label">タイプ</span><span id="detail-types" class="detail-val">-</span></div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">もちもの</span>
+                                        <div class="item-holder">
+                                            <span id="detail-item" class="detail-val">-</span>
+                                            <button id="detail-unequip-btn" class="btn error-btn small-btn hidden" style="width: auto; padding: 4px 8px; font-size: 0.8rem; display: inline-block;">外す</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-footer">
+                                <button id="detail-back-btn" class="btn secondary-btn bottom-left-btn">戻る</button>
+                                <button id="detail-moves-btn" class="btn primary-btn bottom-right-btn">わざ</button>
+                            </div>
+                        </div>
+
+                        <!-- B2. Moves Subview -->
+                        <div id="strength-detail-moves" class="detail-mode-view hidden">
+                            <div class="moves-grid-container">
+                                <div class="moves-grid-2x2">
+                                    <div class="detail-move-card" id="detail-move-0">
+                                        <div class="detail-move-name">-</div>
+                                        <div class="detail-move-power">威力 -</div>
+                                        <div class="detail-move-type">-</div>
+                                    </div>
+                                    <div class="detail-move-card" id="detail-move-1">
+                                        <div class="detail-move-name">-</div>
+                                        <div class="detail-move-power">威力 -</div>
+                                        <div class="detail-move-type">-</div>
+                                    </div>
+                                    <div class="detail-move-card" id="detail-move-2">
+                                        <div class="detail-move-name">-</div>
+                                        <div class="detail-move-power">威力 -</div>
+                                        <div class="detail-move-type">-</div>
+                                    </div>
+                                    <div class="detail-move-card" id="detail-move-3">
+                                        <div class="detail-move-name">-</div>
+                                        <div class="detail-move-power">威力 -</div>
+                                        <div class="detail-move-type">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-footer">
+                                <button id="detail-status-btn" class="btn secondary-btn bottom-left-btn">ステータス</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: ショップ -->
+                <div id="tab-shop" class="tab-content">
+                    <!-- Money bar -->
+                    <div class="money-bar">
+                        <span class="money-icon">💰</span>
+                        <span id="shop-money-display">0</span> 円
+                    </div>
+
+                    <!-- Choose screen: buy or sell -->
+                    <div id="shop-choose-screen" class="shop-choose-screen">
+                        <div id="shop-buy-box" class="shop-action-box buy-box">🛍 購入</div>
+                        <div id="shop-sell-box" class="shop-action-box sell-box">💰 売却</div>
+                    </div>
+
+                    <!-- Buy browser -->
+                    <div id="shop-buy-browser" class="shop-browser">
+                        <div class="shop-browser-layout">
+                            <div class="shop-left-column">
+                                <div class="shop-sub-tabs" id="shop-buy-sub-tabs">
+                                    <button class="shop-sub-tab active" data-category="きのみ">きのみ</button>
+                                    <button class="shop-sub-tab" data-category="もちもの">もちもの</button>
+                                    <button class="shop-sub-tab" data-category="わざマシン">わざマシン</button>
+                                </div>
+                                <div class="shop-item-list" id="shop-buy-item-list"></div>
+                            </div>
+                            <div class="shop-detail-panel">
+                                <div class="shop-detail-placeholder" id="shop-buy-placeholder">← アイテムを選んでください</div>
+                                <div class="shop-detail-content" id="shop-buy-detail">
+                                    <div class="shop-detail-name" id="shop-buy-detail-name"></div>
+                                    <span class="shop-detail-category" id="shop-buy-detail-category"></span>
+                                    <div class="shop-detail-effect" id="shop-buy-detail-effect"></div>
+                                    <div class="shop-detail-price-row">
+                                        <span class="price-label">値段</span>
+                                        <span id="shop-buy-detail-price"></span> 円
+                                    </div>
+                                </div>
+                                <div class="shop-action-row">
+                                    <button class="shop-back-btn" id="shop-buy-back-btn">← 戻る</button>
+                                    <button class="shop-action-btn buy-btn" id="shop-buy-action-btn" disabled>購入</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sell browser -->
+                    <div id="shop-sell-browser" class="shop-browser">
+                        <div class="shop-browser-layout">
+                            <div class="shop-left-column">
+                                <div class="shop-sub-tabs" id="shop-sell-sub-tabs">
+                                    <button class="shop-sub-tab active" data-category="きのみ">きのみ</button>
+                                    <button class="shop-sub-tab" data-category="もちもの">もちもの</button>
+                                    <button class="shop-sub-tab" data-category="わざマシン">わざマシン</button>
+                                </div>
+                                <div class="shop-item-list" id="shop-sell-item-list"></div>
+                            </div>
+                            <div class="shop-detail-panel">
+                                <div class="shop-detail-placeholder" id="shop-sell-placeholder">← アイテムを選んでください</div>
+                                <div class="shop-detail-content" id="shop-sell-detail">
+                                    <div class="shop-detail-name" id="shop-sell-detail-name"></div>
+                                    <span class="shop-detail-category" id="shop-sell-detail-category"></span>
+                                    <div class="shop-detail-effect" id="shop-sell-detail-effect"></div>
+                                    <div class="shop-detail-price-row">
+                                        <span class="price-label">売値</span>
+                                        <span id="shop-sell-detail-price"></span> 円
+                                    </div>
+                                </div>
+                                <div class="shop-action-row">
+                                    <button class="shop-back-btn" id="shop-sell-back-btn">← 戻る</button>
+                                    <button class="shop-action-btn sell-btn" id="shop-sell-action-btn" disabled>売却</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: バトル -->
+                <div id="tab-battle" class="tab-content">
+                    <!-- A. Mode Selection Screen -->
+                    <div id="battle-mode-selection" class="battle-subview" style="display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px 20px;">
+                        <button id="battle-join-queue-btn" class="btn primary-btn btn-large" style="width: 80%; max-width: 300px; padding: 15px;">⚔️ バトルする</button>
+                        <button id="battle-start-grading-btn" class="btn success-btn btn-large" style="width: 80%; max-width: 300px; padding: 15px;">📝 採点をする</button>
+                    </div>
+
+                    <!-- B. Battle Waiting Queue Screen -->
+                    <div id="battle-waiting-subview" class="battle-subview waiting-card" style="display: none; text-align: center; padding: 40px 20px; flex-direction: column; align-items: center;">
+                        <div class="spinner"></div>
+                        <h2 style="margin-top: 20px;">対戦相手が選ばれるのを待っています...</h2>
+                        <p style="color: var(--text-muted);">管理者が対戦相手を選んでバトルを開始すると、自動的に画面が切り替わります。</p>
+                        <button id="battle-leave-queue-btn" class="btn secondary-btn" style="margin-top: 20px; width: 100%; max-width: 200px;">キャンセル</button>
+                    </div>
+
+                    <!-- C. Interactive Player Battle Arena -->
+                    <div id="battle-player-arena-subview" class="battle-subview" style="display: none; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; padding: 10px;">
+                        <div id="player-arena-layout" style="display: flex; flex-direction: column; gap: 15px; height: 100%;">
+                            <!-- Opponent Pokemon Card -->
+                            <div class="poke-battle-card" id="p-battle-card-opp" style="margin-bottom: 0;">
+                                <div class="poke-info">
+                                    <div class="poke-name-row">
+                                        <span class="poke-battle-name" id="p-opp-name">-</span>
+                                        <span class="poke-level" id="p-opp-level">Lv.-</span>
+                                    </div>
+                                    <div class="hp-bar-container">
+                                        <div class="hp-bar-fill" id="p-opp-hp-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <div class="hp-text-row">
+                                        <span class="poke-types" id="p-opp-types">-</span>
+                                        <span class="hp-val" id="p-opp-hp-val">0/0</span>
+                                    </div>
+                                </div>
+                                <div class="poke-sprite-placeholder" id="p-opp-sprite"></div>
+                            </div>
+
+                            <!-- My Active Pokemon Card -->
+                            <div class="poke-battle-card" id="p-battle-card-my" style="margin-bottom: 0;">
+                                <div class="poke-info">
+                                    <div class="poke-name-row">
+                                        <span class="poke-battle-name" id="p-my-name">-</span>
+                                        <span class="poke-level" id="p-my-level">Lv.-</span>
+                                    </div>
+                                    <div class="hp-bar-container">
+                                        <div class="hp-bar-fill" id="p-my-hp-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <div class="hp-text-row">
+                                        <span class="poke-types" id="p-my-types">-</span>
+                                        <span class="hp-val" id="p-my-hp-val">0/0</span>
+                                    </div>
+                                </div>
+                                <div class="poke-sprite-placeholder" id="p-my-sprite"></div>
+                            </div>
+
+                            <!-- Move Buttons & Swap Control -->
+                            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                                <!-- 4 Moves Grid -->
+                                <div id="p-moves-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                    <button class="move-box" id="p-move-0" data-idx="0">
+                                        <div class="move-title">-</div>
+                                        <div class="move-meta"><span class="move-type">-</span> <span class="move-power">威力 -</span></div>
+                                    </button>
+                                    <button class="move-box" id="p-move-1" data-idx="1">
+                                        <div class="move-title">-</div>
+                                        <div class="move-meta"><span class="move-type">-</span> <span class="move-power">威力 -</span></div>
+                                    </button>
+                                    <button class="move-box" id="p-move-2" data-idx="2">
+                                        <div class="move-title">-</div>
+                                        <div class="move-meta"><span class="move-type">-</span> <span class="move-power">威力 -</span></div>
+                                    </button>
+                                    <button class="move-box" id="p-move-3" data-idx="3">
+                                        <div class="move-title">-</div>
+                                        <div class="move-meta"><span class="move-type">-</span> <span class="move-power">威力 -</span></div>
+                                    </button>
+                                </div>
+
+                                <!-- Lower Controls: Swap at bottom left, Back at bottom right -->
+                                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                                    <button id="p-swap-btn" class="btn secondary-btn" style="flex: 1; padding: 12px; font-weight: bold;">🔄 交代</button>
+                                    <button id="p-back-btn" class="btn secondary-btn" style="flex: 1; padding: 12px; font-weight: bold; display: none;">↩️ 戻る</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- D. Interactive Grader Panel -->
+                    <div id="battle-grader-subview" class="battle-subview" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box; text-align: center; gap: 25px;">
+                        <h2 style="color: var(--primary);">📝 審査員の採点画面</h2>
+                        <p style="color: var(--text-muted);">回答者のわざを審査して、以下のボタンから1〜3の点数で評価を付けてください。</p>
+                        
+                        <div id="grader-button-row" style="display: flex; gap: 15px; width: 100%; max-width: 400px;">
+                            <button class="btn primary-btn grader-point-btn" data-point="1" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">1</button>
+                            <button class="btn primary-btn grader-point-btn" data-point="2" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">2</button>
+                            <button class="btn primary-btn grader-point-btn" data-point="3" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">3</button>
+                        </div>
+                        
+                        <button id="grader-exit-btn" class="btn secondary-btn" style="margin-top: 20px; width: 100%; max-width: 200px;">採点をやめる</button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: もちもの -->
+                <div id="tab-bag" class="tab-content">
+                    <div class="bag-container">
+                        <div class="bag-header">
+                            <h3>💼 もちもの</h3>
+                            <span class="bag-money">💰 <span id="bag-money-display">0</span> 円</span>
+                        </div>
+                        <div class="bag-layout">
+                            <div class="bag-item-list" id="bag-item-list">
+                                <div class="bag-empty-msg" id="bag-empty-msg">アイテムを持っていません</div>
+                            </div>
+                            <div class="bag-detail-panel">
+                                <div class="bag-detail-placeholder" id="bag-detail-placeholder">← アイテムを選んでください</div>
+                                <div class="bag-detail-content" id="bag-detail-content">
+                                    <div class="bag-detail-name" id="bag-detail-name"></div>
+                                    <span class="shop-detail-category" id="bag-detail-category"></span>
+                                    <div class="bag-detail-effect" id="bag-detail-effect"></div>
+                                    <div class="shop-detail-price-row">
+                                        <span class="price-label">売値</span>
+                                        <span id="bag-detail-sell-price"></span> 円
+                                    </div>
+                                </div>
+                                <div class="bag-action-row" id="bag-action-row">
+                                    <button class="shop-action-btn buy-btn" id="bag-use-btn" disabled>そうび</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab 5: シミュレーション (Active Content) -->
+                <div id="tab-simulation" class="tab-content active-content">
+                    
+                    <!-- Subscreen 5A: Select Pokemon for Simulation -->
+                    <div id="sim-select-subscreen" class="subscreen active-sub">
+                        <div class="sim-selector-card">
+                            <h2 class="section-title">シミュレーションする組み合わせを選んでください</h2>
+                            
+                            <div class="selector-row">
+                                <div class="selector-box">
+                                    <label for="my-poke-select">自分のポケモン</label>
+                                    <select id="my-poke-select">
+                                        <option value="">選択してください</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="vs-badge">VS</div>
+                                
+                                <div class="selector-box">
+                                    <label for="enemy-poke-select">相手のポケモン</label>
+                                    <select id="enemy-poke-select">
+                                        <option value="">選択してください</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button id="start-battle-btn" class="btn primary-btn btn-large" disabled>バトル開始</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Subscreen 5B: Active Simulation Battle -->
+                    <div id="sim-battle-subscreen" class="subscreen">
+                        <div id="battle-layout">
+                            <!-- Left Area: Battle Screen (2/3 width) -->
+                            <div id="battle-arena">
+                                <!-- My Side -->
+                                <div class="poke-battle-card" id="my-battle-card">
+                                    <div class="poke-info">
+                                        <div class="poke-name-row">
+                                            <span class="poke-battle-name" id="my-battle-name">-</span>
+                                            <span class="poke-level" id="my-battle-level">Lv.-</span>
+                                        </div>
+                                        <div class="hp-bar-container">
+                                            <div class="hp-bar-fill" id="my-hp-fill" style="width: 100%;"></div>
+                                        </div>
+                                        <div class="hp-text-row">
+                                            <span class="poke-types" id="my-battle-types">-</span>
+                                            <span class="hp-val"><span id="my-curr-hp">0</span>/<span id="my-max-hp">0</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="poke-sprite-placeholder" id="my-sprite">🤖</div>
+                                </div>
+                                
+                                <!-- Center Controls -->
+                                <div id="arena-controls">
+                                    <button id="swap-btn" class="circle-btn" title="操作ポケモンと相手を入れ替える">
+                                        <span class="swap-icon">⇄</span>
+                                        <span class="swap-lbl">入れ替え</span>
+                                    </button>
+
+                                </div>
+                                
+                                <!-- Enemy Side -->
+                                <div class="poke-battle-card" id="enemy-battle-card">
+                                    <div class="poke-info">
+                                        <div class="poke-name-row">
+                                            <span class="poke-battle-name" id="enemy-battle-name">-</span>
+                                            <span class="poke-level" id="enemy-battle-level">Lv.-</span>
+                                        </div>
+                                        <div class="hp-bar-container">
+                                            <div class="hp-bar-fill" id="enemy-hp-fill" style="width: 100%;"></div>
+                                        </div>
+                                        <div class="hp-text-row">
+                                            <span class="poke-types" id="enemy-battle-types">-</span>
+                                            <span class="hp-val"><span id="enemy-curr-hp">0</span>/<span id="enemy-max-hp">0</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="poke-sprite-placeholder" id="enemy-sprite">👾</div>
+                                </div>
+                                <div id="battle-message-banner" class="battle-message-banner hidden"></div>
+                            </div>
+                            
+                            <!-- Right Area: Move selection list (1/3 width) -->
+                            <div id="moves-panel">
+                                <button class="move-box" id="move-0" data-idx="0">
+                                    <div class="move-title">-</div>
+                                    <div class="move-meta">
+                                        <span class="move-type">-</span>
+                                        <span class="move-power">威力 -</span>
+                                    </div>
+                                </button>
+                                <button class="move-box" id="move-1" data-idx="1">
+                                    <div class="move-title">-</div>
+                                    <div class="move-meta">
+                                        <span class="move-type">-</span>
+                                        <span class="move-power">威力 -</span>
+                                    </div>
+                                </button>
+                                <button class="move-box" id="move-2" data-idx="2">
+                                    <div class="move-title">-</div>
+                                    <div class="move-meta">
+                                        <span class="move-type">-</span>
+                                        <span class="move-power">威力 -</span>
+                                    </div>
+                                </button>
+                                <button class="move-box" id="move-3" data-idx="3">
+                                    <div class="move-title">-</div>
+                                    <div class="move-meta">
+                                        <span class="move-type">-</span>
+                                        <span class="move-power">威力 -</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Battle Finish Overlay -->
+                        <div id="battle-finish-overlay" class="hidden">
+                            <div class="finish-dialog">
+                                <h1 class="finish-title">FINISH</h1>
+                                <p id="finish-result-text">-</p>
+                                <button id="finish-close-btn" class="btn primary-btn">選択画面に戻る</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Tabs Bar (Always Visible) -->
+            <nav id="tabs-bar">
+                <button class="tab-item" data-tab="strength">
+                    <span class="tab-icon">💪</span>
+                    <span class="tab-label">ポケモン</span>
+                </button>
+                <button class="tab-item" data-tab="shop">
+                    <span class="tab-icon">🛒</span>
+                    <span class="tab-label">ショップ</span>
+                </button>
+                <button class="tab-item" data-tab="battle">
+                    <span class="tab-icon">⚔️</span>
+                    <span class="tab-label">バトル</span>
+                </button>
+                <button class="tab-item" data-tab="bag">
+                    <span class="tab-icon">💼</span>
+                    <span class="tab-label">もちもの</span>
+                </button>
+                <button class="tab-item active" data-tab="simulation">
+                    <span class="tab-icon">🔄</span>
+                    <span class="tab-label">シミュレーション</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+    <!-- Shop Confirmation Modal -->
+    <div id="shop-confirm-overlay" class="shop-confirm-overlay hidden">
+        <div class="shop-confirm-dialog">
+            <p id="shop-confirm-message" class="shop-confirm-msg"></p>
+            <div class="shop-confirm-btns">
+                <button id="shop-confirm-cancel-btn" class="shop-confirm-btn cancel-btn">キャンセル</button>
+                <button id="shop-confirm-ok-btn" class="shop-confirm-btn ok-btn">はい</button>
+            </div>
+        </div>
+    </div>
+    <!-- Bag Item Action Modal -->
+    <div id="bag-action-overlay" class="shop-confirm-overlay hidden">
+        <!-- 1. Select Pokemon Dialog -->
+        <div class="shop-confirm-dialog" id="bag-dialog-select-poke">
+            <p class="shop-confirm-msg" id="bag-select-title">どちらのポケモンに対象を行いますか？</p>
+            <div class="shop-confirm-btns" style="flex-direction: column; gap: 8px;">
+                <button id="bag-poke-opt-1" class="shop-confirm-btn ok-btn" style="width: 100%;"></button>
+                <button id="bag-poke-opt-2" class="shop-confirm-btn ok-btn" style="width: 100%;"></button>
+                <button id="bag-select-cancel-btn" class="shop-confirm-btn cancel-btn" style="width: 100%;">キャンセル</button>
+            </div>
+        </div>
+        
+        <!-- 2. Confirm Equip Dialog -->
+        <div class="shop-confirm-dialog hidden" id="bag-dialog-confirm-equip">
+            <p class="shop-confirm-msg" id="bag-equip-msg"></p>
+            <div class="shop-confirm-btns">
+                <button id="bag-equip-cancel-btn" class="shop-confirm-btn cancel-btn">戻る</button>
+                <button id="bag-equip-ok-btn" class="shop-confirm-btn ok-btn">装備する</button>
+            </div>
+        </div>
+
+        <!-- 3. Select Move Dialog -->
+        <div class="shop-confirm-dialog hidden" id="bag-dialog-select-move">
+            <p class="shop-confirm-msg">忘れるわざを選んでください</p>
+            <div class="bag-move-grid" id="bag-move-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+                <button class="bag-move-btn" id="bag-move-0" data-idx="0" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;"></button>
+                <button class="bag-move-btn" id="bag-move-1" data-idx="1" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;"></button>
+                <button class="bag-move-btn" id="bag-move-2" data-idx="2" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;"></button>
+                <button class="bag-move-btn" id="bag-move-3" data-idx="3" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;"></button>
+            </div>
+            <button id="bag-move-cancel-btn" class="shop-confirm-btn cancel-btn" style="width: 100%;">戻る</button>
+        </div>
+
+        <!-- 4. Confirm Move Dialog -->
+        <div class="shop-confirm-dialog hidden" id="bag-dialog-confirm-move">
+            <p class="shop-confirm-msg" id="bag-move-msg"></p>
+            <div class="shop-confirm-btns">
+                <button id="bag-learn-cancel-btn" class="shop-confirm-btn cancel-btn">戻る</button>
+                <button id="bag-learn-ok-btn" class="shop-confirm-btn ok-btn">おぼえさせる</button>
+            </div>
+        </div>
+
+        <!-- 5. Result message Dialog -->
+        <div class="shop-confirm-dialog hidden" id="bag-dialog-result">
+            <p class="shop-confirm-msg" id="bag-result-msg"></p>
+            <button id="bag-result-close-btn" class="shop-confirm-btn ok-btn" style="width: 100%;">閉じる</button>
+        </div>
+
+        <!-- 6. Select Stat to Boost Dialog -->
+        <div class="shop-confirm-dialog hidden" id="bag-dialog-select-stat">
+            <p class="shop-confirm-msg">上昇させるステータスを選んでください（+3 上昇します）</p>
+            <div class="bag-move-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+                <button class="bag-move-btn stat-boost-btn" data-stat="hp" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;">HP</button>
+                <button class="bag-move-btn stat-boost-btn" data-stat="attack" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;">攻撃</button>
+                <button class="bag-move-btn stat-boost-btn" data-stat="defense" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;">防御</button>
+                <button class="bag-move-btn stat-boost-btn" data-stat="sp_attack" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold;">特攻</button>
+                <button class="bag-move-btn stat-boost-btn" data-stat="sp_defense" style="padding: 10px; font-size: 0.8rem; font-family: var(--font-game); font-weight: bold; grid-column: span 2;">特防</button>
+            </div>
+            <button id="bag-stat-cancel-btn" class="shop-confirm-btn cancel-btn" style="width: 100%;">戻る</button>
+        </div>
+    </div>
+    <!-- Main Logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

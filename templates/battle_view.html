@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バトル観戦画面</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #fff;
+            font-family: 'M PLUS 2', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .arena-container {
+            width: 100%;
+            max-width: 900px;
+            background: #151f32;
+            border: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 30px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .battle-header {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+            color: #60a5fa;
+            border-bottom: 2px dashed #1e293b;
+            padding-bottom: 15px;
+        }
+        .pokes-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+        .side-card {
+            flex: 1;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+        .side-card.active-target {
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+        .player-name-label {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+        .poke-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+        .poke-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #f8fafc;
+        }
+        .poke-level {
+            font-size: 0.9rem;
+            color: #3b82f6;
+        }
+        .hp-bar-bg {
+            background: #0f172a;
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
+        }
+        .hp-bar-val {
+            background: #10b981;
+            height: 100%;
+            width: 100%;
+            transition: width 0.5s ease-in-out;
+        }
+        .hp-text {
+            text-align: right;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #cbd5e1;
+        }
+        .vs-badge {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        .grader-only-container {
+            background: #111827;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .grader-score-lbl {
+            font-size: 1.1rem;
+            color: #f59e0b;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .grader-score-val {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #fbbf24;
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+        }
+        .battle-log {
+            background: #090d16;
+            border: 2px solid #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #34d399;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            font-size: 1.3rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="arena-container">
+        <div id="active-battle-area" class="hidden">
+            <div class="battle-header" id="battle-title">PLAYER 1 VS PLAYER 2</div>
+            
+            <div class="pokes-row" id="pokes-row-area">
+                <!-- Player A -->
+                <div class="side-card" id="card-a">
+                    <div class="player-name-label" id="player-a-name">-</div>
+                    <div class="poke-header">
+                        <span class="poke-name" id="poke-a-name">-</span>
+                        <span class="poke-level" id="poke-a-level">Lv.50</span>
+                    </div>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-val" id="poke-a-hp-fill"></div>
+                    </div>
+                    <div class="hp-text" id="poke-a-hp-text">-/-</div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <!-- Player B -->
+                <div class="side-card" id="card-b">
+                    <div class="player-name-label" id="player-b-name">-</div>
+                    <div class="poke-header">
+                        <span class="poke-name" id="poke-b-name">-</span>
+                        <span class="poke-level" id="poke-b-level">Lv.50</span>
+                    </div>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-val" id="poke-b-hp-fill"></div>
+                    </div>
+                    <div class="hp-text" id="poke-b-hp-text">-/-</div>
+                </div>
+            </div>
+
+            <!-- Grader score only display -->
+            <div class="grader-only-container hidden" id="grader-only-score-box">
+                <div class="grader-score-lbl">現在の採点結果</div>
+                <div class="grader-score-val" id="grader-score-display">0 点</div>
+            </div>
+
+            <div class="battle-log" id="battle-log">
+                <!-- Log messages will append here -->
+            </div>
+        </div>
+
+        <div id="no-battle-area" class="empty-state">
+            現在、行われているバトルはありません。
+        </div>
+    </div>
+
+    <script>
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/battle/viewer/status');
+                const data = await res.json();
+                
+                if (data.success && data.active) {
+                    document.getElementById('no-battle-area').classList.add('hidden');
+                    document.getElementById('active-battle-area').classList.remove('hidden');
+                    
+                    document.getElementById('battle-title').textContent = `${data.player_a_name} VS ${data.player_b_name}`;
+                    
+                    // Pokemons
+                    const pokeA = data.a_pokemon[data.a_active_idx];
+                    const pokeB = data.b_pokemon[data.b_active_idx];
+                    
+                    if (pokeA && pokeB) {
+                        // Check if player selected for grading
+                        const hasTarget = !!data.target_player; // 'A' or 'B'
+                        
+                        if (hasTarget) {
+                            // Target mode: Hide score box, show pokemon details
+                            document.getElementById('grader-only-score-box').classList.add('hidden');
+                            document.getElementById('pokes-row-area').classList.remove('hidden');
+                            
+                            // A
+                            document.getElementById('player-a-name').textContent = data.player_a_name;
+                            document.getElementById('poke-a-name').textContent = pokeA.name;
+                            document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
+                            const hpFillA = (pokeA.hp / pokeA.max_hp) * 100;
+                            document.getElementById('poke-a-hp-fill').style.width = `${hpFillA}%`;
+                            document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
+                            
+                            // B
+                            document.getElementById('player-b-name').textContent = data.player_b_name;
+                            document.getElementById('poke-b-name').textContent = pokeB.name;
+                            document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
+                            const finalHpB = pokeB.max_hp > 0 ? (pokeB.hp / pokeB.max_hp) * 100 : 0;
+                            document.getElementById('poke-b-hp-fill').style.width = `${finalHpB}%`;
+                            document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
+                            
+                            // Active target highlights
+                            document.getElementById('card-a').className = 'side-card' + (data.target_player === 'A' ? ' active-target' : '');
+                            document.getElementById('card-b').className = 'side-card' + (data.target_player === 'B' ? ' active-target' : '');
+                        } else {
+                            // Grader only mode: Show score box if last_confirmed_score is not null, hide pokemon details
+                            document.getElementById('pokes-row-area').classList.add('hidden');
+                            if (data.last_confirmed_score !== null) {
+                                document.getElementById('grader-only-score-box').classList.remove('hidden');
+                                document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
+                            } else {
+                                document.getElementById('grader-only-score-box').classList.add('hidden');
+                            }
+                        }
+                    }
+
+                    // Log Messages
+                    const logBox = document.getElementById('battle-log');
+                    logBox.innerHTML = '';
+                    (data.messages || []).forEach(msg => {
+                        const div = document.createElement('div');
+                        div.textContent = msg;
+                        logBox.appendChild(div);
+                    });
+                    logBox.scrollTop = logBox.scrollHeight;
+                } else {
+                    document.getElementById('no-battle-area').classList.remove('hidden');
+                    document.getElementById('active-battle-area').classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Error updating battle status:", err);
+            }
+        }
+
+        setInterval(updateStatus, 1500);
+        updateStatus();
+    </script>
+</body>
+</html>
