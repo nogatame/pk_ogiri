@@ -514,7 +514,8 @@ function startBattle(myPokeName, enemyPokeName) {
         spDefense: myData.sp_defense,
         moves: myData.moves,
         item: myData.item,
-        isPlayer: true // Helper flag
+        isPlayer: true, // Helper flag
+        choiceLockMove: null
     };
     
     state.battle.right = {
@@ -531,7 +532,8 @@ function startBattle(myPokeName, enemyPokeName) {
         spDefense: enemyData.spDefense || enemyData.sp_defense,
         moves: enemyData.moves,
         item: enemyData.item,
-        isPlayer: false
+        isPlayer: false,
+        choiceLockMove: null
     };
     
     state.battle.turns = 0;
@@ -590,7 +592,12 @@ function updateBattleUI() {
         const move = left.moves[i];
         
         if (move) {
-            btn.disabled = false;
+            const isChoiceItem = (left.item === 'こだわりハチマキ' || left.item === 'こだわりメガネ');
+            if (isChoiceItem && left.choiceLockMove && move.name !== left.choiceLockMove) {
+                btn.disabled = true;
+            } else {
+                btn.disabled = false;
+            }
             btn.querySelector('.move-title').textContent = move.name;
             btn.querySelector('.move-type').textContent = move.type;
             btn.querySelector('.move-power').textContent = `威力 ${move.power}`;
@@ -849,6 +856,11 @@ el.movesPanel.addEventListener('click', async (e) => {
     
     if (!move) return;
     
+    // Set choice lock for simulation mode
+    if ((attacker.item === 'こだわりハチマキ' || attacker.item === 'こだわりメガネ') && !attacker.choiceLockMove) {
+        attacker.choiceLockMove = move.name;
+    }
+    
     // Disable moves to prevent double clicking during resolution
     el.moveBtns.forEach(b => b.disabled = true);
     
@@ -883,12 +895,7 @@ el.movesPanel.addEventListener('click', async (e) => {
         showBattleMessage(`もちもの”${attItem}”が発動！\n${getItemEffectText(attItem)}`);
     }
 
-    // 2. Choice items
-    if (attItem === 'こだわりハチマキ' && move.category === '物理') {
-        showBattleMessage(`もちもの”${attItem}”が発動！\n${getItemEffectText(attItem)}`);
-    } else if (attItem === 'こだわりメガネ' && move.category !== '物理') {
-        showBattleMessage(`もちもの”${attItem}”が発動！\n${getItemEffectText(attItem)}`);
-    }
+    // 2. Choice items (activation log removed)
 
     // 3. Life orb
     if (attItem === 'いのちのたま') {
@@ -1037,12 +1044,7 @@ el.movesPanel.addEventListener('click', async (e) => {
     } else {
         // Re-enable moves for active left side pokemon
         if (state.battle.active) {
-            for (let i = 0; i < 4; i++) {
-                const move = attacker.moves[i];
-                if (move) {
-                    el.moveBtns[i].disabled = false;
-                }
-            }
+            updateBattleUI();
         }
     }
 });
@@ -1060,6 +1062,9 @@ el.swapBtn.addEventListener('click', () => {
         const temp = state.battle.left;
         state.battle.left = state.battle.right;
         state.battle.right = temp;
+        
+        if (state.battle.left) state.battle.left.choiceLockMove = null;
+        if (state.battle.right) state.battle.right.choiceLockMove = null;
         
         updateBattleUI();
         
@@ -2137,8 +2142,9 @@ function updateBattlePlayerArena(data) {
             btn.querySelector('.move-power').textContent = `威力 ${m.power}`;
             btn.style.display = '';
             
-            // Grey out move button if move selected or target fainted
-            if (data.my_selected_move || myPoke.hp <= 0) {
+            // Grey out move button if move selected or target fainted, or if choice locked
+            const isChoiceItem = (myPoke.item === 'こだわりハチマキ' || myPoke.item === 'こだわりメガネ');
+            if (data.my_selected_move || myPoke.hp <= 0 || (isChoiceItem && myPoke.choice_lock && m.name !== myPoke.choice_lock)) {
                 btn.disabled = true;
             } else {
                 btn.disabled = false;

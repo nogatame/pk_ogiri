@@ -1310,11 +1310,9 @@ def confirm_score_internal():
             if move_type == b_type:
                 active_battle["messages"].append(f"もちもの”{att_item}”が発動！{get_item_effect_text(att_item)}")
 
-        # 2. Choice items
-        if att_item == 'こだわりハチマキ' and category == '物理':
-            active_battle["messages"].append(f"もちもの”{att_item}”が発動！{get_item_effect_text(att_item)}")
-        elif att_item == 'こだわりメガネ' and category != '物理':
-            active_battle["messages"].append(f"もちもの”{att_item}”が発動！{get_item_effect_text(att_item)}")
+        # 2. Choice items (Set choice lock without appending activation messages)
+        if att_item in ('こだわりハチマキ', 'こだわりメガネ') and not attacker_poke.get('choice_lock'):
+            attacker_poke['choice_lock'] = move_name
 
         # 3. Life orb
         if att_item == 'いのちのたま':
@@ -1401,6 +1399,7 @@ def confirm_score_internal():
 
         # Check defender fainted
         if defender_poke['hp'] <= 0:
+            defender_poke['choice_lock'] = None
             active_battle["messages"].append(f"{defender_poke['name']}はたおれた！")
             
             # Switch to 2nd pokemon if available
@@ -1639,7 +1638,8 @@ def admin_battle_start():
                 "sp_defense": sp_defense,
                 "moves": poke_moves,
                 "item": p_info.get('もちもの'),
-                "level": p_info.get('レベル', 50)
+                "level": p_info.get('レベル', 50),
+                "choice_lock": None
             })
         return res
 
@@ -1714,7 +1714,9 @@ def admin_battle_approve_swap():
         if len(pokes) < 2:
             return jsonify({"success": False, "message": "控えのポケモンがいません。"}), 400
         # Check if the fainted pokemon swap or active swap
-        active_battle["a_active_idx"] = 1 - active_battle["a_active_idx"]
+        old_idx = active_battle["a_active_idx"]
+        active_battle["a_active_idx"] = 1 - old_idx
+        pokes[old_idx]["choice_lock"] = None
         active_battle["a_swapped"] = True
         active_battle["a_selected_move"] = None
         p_name = next((p.get('名前') for p in players_data if p.get('ユーザid') == active_battle["player_a"]), active_battle["player_a"])
@@ -1723,7 +1725,9 @@ def admin_battle_approve_swap():
         pokes = active_battle["b_pokemon"]
         if len(pokes) < 2:
             return jsonify({"success": False, "message": "控えのポケモンがいません。"}), 400
-        active_battle["b_active_idx"] = 1 - active_battle["b_active_idx"]
+        old_idx = active_battle["b_active_idx"]
+        active_battle["b_active_idx"] = 1 - old_idx
+        pokes[old_idx]["choice_lock"] = None
         active_battle["b_swapped"] = True
         active_battle["b_selected_move"] = None
         p_name = next((p.get('名前') for p in players_data if p.get('ユーザid') == active_battle["player_b"]), active_battle["player_b"])
