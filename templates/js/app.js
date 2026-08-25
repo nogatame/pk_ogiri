@@ -2,7 +2,7 @@
 let TYPE_CHART = {};
 
 // ngrok URL (Change this to your current ngrok URL!)
-const API_BASE_URL = "https://shaky-carrots-love.loca.lt";
+const API_BASE_URL = "https://nice-cameras-stare.loca.lt/";
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;

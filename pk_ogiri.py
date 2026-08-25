@@ -12,7 +12,7 @@ def get_current_user_id():
     user_id = request.headers.get('X-User-Id')
     if user_id:
         return user_id.strip()
-    return get_current_user_id()
+    return None
 
 # --- Real-Time Battle State ---
 # Waiting queues and active state
