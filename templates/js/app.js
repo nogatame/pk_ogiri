@@ -2,19 +2,19 @@
 let TYPE_CHART = {};
 
 // ngrok URL (Change this to your current ngrok URL!)
-const API_BASE_URL = "https://swift-sites-jump.loca.lt";
+const API_BASE_URL = "https://shaky-carrots-love.loca.lt";
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
-window.fetch = function(url, options) {
+window.fetch = function (url, options) {
     options = options || {};
     options.headers = options.headers || {};
-    
+
     // Automatically prepend ngrok base URL for absolute paths to Flask API
     if (url.startsWith('/api') || url.startsWith('/static')) {
         url = API_BASE_URL + url;
     }
-    
+
     const userId = sessionStorage.getItem('user_id') || (typeof state !== 'undefined' ? state.userId : '');
     if (userId) {
         if (options.headers instanceof Headers) {
@@ -40,7 +40,7 @@ const state = {
     shopItems: [],         // All items from pokemon_items.json
     shopCategory: 'きのみ', // Current selected tab category (きのみ/もちもの/わざマシン)
     movesList: [],         // Loaded from /api/items
-    
+
     // Battle State
     battle: {
         active: false,
@@ -51,7 +51,7 @@ const state = {
         right: null,
     },
     isJoiningOrWaiting: false,
-    
+
     pollingInterval: null
 };
 
@@ -63,7 +63,7 @@ const el = {
     waitingScreen: document.getElementById('waiting-screen'),
     getScreen: document.getElementById('get-screen'),
     mainScreen: document.getElementById('main-screen'),
-    
+
     // Auth Forms
     loginForm: document.getElementById('login-form-container'),
     registerForm: document.getElementById('register-form-container'),
@@ -75,7 +75,7 @@ const el = {
     loginBtn: document.getElementById('login-btn'),
     registerBtn: document.getElementById('register-btn'),
     authError: document.getElementById('auth-error'),
-    
+
     // Choices Form
     wishSelects: [
         document.getElementById('wish-1'),
@@ -86,26 +86,26 @@ const el = {
     ],
     submitWishesBtn: document.getElementById('submit-wishes-btn'),
     choiceError: document.getElementById('choice-error'),
-    
+
     // Waiting Screen
     waitingUsername: document.getElementById('waiting-username'),
-    
+
     // Get Screen
     obtainedName1: document.getElementById('obtained-name-1'),
     obtainedName2: document.getElementById('obtained-name-2'),
     startGameBtn: document.getElementById('start-game-btn'),
-    
+
     // Main Game Elements
     tabs: document.querySelectorAll('.tab-item'),
     tabContents: document.querySelectorAll('.tab-content'),
-    
+
     // Simulation Selection
     myPokeSelect: document.getElementById('my-poke-select'),
     enemyPokeSelect: document.getElementById('enemy-poke-select'),
     startBattleBtn: document.getElementById('start-battle-btn'),
     simSelectSubscreen: document.getElementById('sim-select-subscreen'),
     simBattleSubscreen: document.getElementById('sim-battle-subscreen'),
-    
+
     // Battle Screen
     myBattleCard: document.getElementById('my-battle-card'),
     myBattleName: document.getElementById('my-battle-name'),
@@ -115,7 +115,7 @@ const el = {
     myCurrHp: document.getElementById('my-curr-hp'),
     myMaxHp: document.getElementById('my-max-hp'),
     mySprite: document.getElementById('my-sprite'),
-    
+
     enemyBattleCard: document.getElementById('enemy-battle-card'),
     enemyBattleName: document.getElementById('enemy-battle-name'),
     enemyBattleLevel: document.getElementById('enemy-battle-level'),
@@ -124,7 +124,7 @@ const el = {
     enemyCurrHp: document.getElementById('enemy-curr-hp'),
     enemyMaxHp: document.getElementById('enemy-max-hp'),
     enemySprite: document.getElementById('enemy-sprite'),
-    
+
     swapBtn: document.getElementById('swap-btn'),
     turnCount: document.getElementById('turn-count'),
     movesPanel: document.getElementById('moves-panel'),
@@ -134,7 +134,7 @@ const el = {
         document.getElementById('move-2'),
         document.getElementById('move-3')
     ],
-    
+
     // Battle Finish Overlay
     battleFinishOverlay: document.getElementById('battle-finish-overlay'),
     finishResultText: document.getElementById('finish-result-text'),
@@ -149,7 +149,7 @@ function showScreen(screen) {
         s.classList.remove('active');
         s.style.display = 'none';
     });
-    
+
     // Show target screen
     screen.style.display = 'flex';
     // Force reflow
@@ -171,7 +171,7 @@ function showSubscreen(subscreen) {
 // Routing helper based on user status
 function routeUserStatus(status, pokemon1, pokemon2) {
     state.status = status;
-    
+
     if (status === 'active') {
         // Go straight to main dashboard
         loadGameData().then(() => {
@@ -229,7 +229,7 @@ el.loginBtn.addEventListener('click', async () => {
         showAuthError("ユーザーIDを入力してください。");
         return;
     }
-    
+
     try {
         const res = await fetch('/api/login', {
             method: 'POST',
@@ -237,7 +237,7 @@ el.loginBtn.addEventListener('click', async () => {
             body: JSON.stringify({ user_id: userId })
         });
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
             state.userId = data.user_id;
             sessionStorage.setItem('user_id', data.user_id);
@@ -263,13 +263,13 @@ el.registerBtn.addEventListener('click', async () => {
         showAuthError("名前を入力してください。");
         return;
     }
-    
+
     // Regexp validation check: alphanumeric, 4 chars or more
     if (!/^[a-zA-Z0-9]{4,}$/.test(userId)) {
         showAuthError("ユーザーIDは4文字以上の半角英数字にしてください。");
         return;
     }
-    
+
     try {
         const res = await fetch('/api/register', {
             method: 'POST',
@@ -277,7 +277,7 @@ el.registerBtn.addEventListener('click', async () => {
             body: JSON.stringify({ user_id: userId, name: name })
         });
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
             state.userId = data.user_id;
             sessionStorage.setItem('user_id', data.user_id);
@@ -306,13 +306,13 @@ async function loadWishesOptions() {
         // Just need poke list so we can fill dropdowns
         const res = await fetch('/api/game_data');
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
             state.allPokemons = data.all_pokemons;
             if (data.type_chart) {
                 TYPE_CHART = data.type_chart;
             }
-            
+
             // Populate select dropdowns
             el.wishSelects.forEach(select => {
                 select.innerHTML = '<option value="">選択してください</option>';
@@ -333,10 +333,10 @@ async function loadWishesOptions() {
 el.wishSelects.forEach(select => {
     select.addEventListener('change', () => {
         el.choiceError.classList.add('hidden');
-        
+
         const selectedValues = el.wishSelects.map(s => s.value).filter(val => val !== '');
         const uniqueValues = new Set(selectedValues);
-        
+
         // Check for duplicates
         if (selectedValues.length !== uniqueValues.size) {
             el.choiceError.textContent = "すでに選択されているポケモンは再度選択できません。";
@@ -344,7 +344,7 @@ el.wishSelects.forEach(select => {
             el.submitWishesBtn.disabled = true;
             return;
         }
-        
+
         // Must select all 5
         if (selectedValues.length === 5) {
             el.submitWishesBtn.disabled = false;
@@ -357,7 +357,7 @@ el.wishSelects.forEach(select => {
 // Submit choices click
 el.submitWishesBtn.addEventListener('click', async () => {
     const choices = el.wishSelects.map(s => s.value);
-    
+
     try {
         const res = await fetch('/api/submit_choices', {
             method: 'POST',
@@ -365,7 +365,7 @@ el.submitWishesBtn.addEventListener('click', async () => {
             body: JSON.stringify({ choices: choices })
         });
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
             routeUserStatus('waiting', null, null);
         } else {
@@ -385,22 +385,22 @@ el.submitWishesBtn.addEventListener('click', async () => {
 
 function startPolling() {
     if (state.pollingInterval) clearInterval(state.pollingInterval);
-    
+
     state.pollingInterval = setInterval(async () => {
         try {
             const res = await fetch('/api/status');
             const data = await res.json();
-            
+
             if (res.ok && data.success) {
                 if (data.status === 'ready') {
                     // Stopping polling
                     clearInterval(state.pollingInterval);
                     state.pollingInterval = null;
-                    
+
                     // Show celebration screen
                     el.obtainedName1.textContent = data.pokemon1;
                     el.obtainedName2.textContent = data.pokemon2;
-                    
+
                     loadGameData().then(() => {
                         const poke1 = state.allPokemons.find(p => p.name === data.pokemon1);
                         const poke2 = state.allPokemons.find(p => p.name === data.pokemon2);
@@ -434,10 +434,10 @@ function initTabNavigation() {
             el.tabContents.forEach(c => {
                 c.classList.remove('active-content');
             });
-            
+
             // Add active class to clicked tab
             tab.classList.add('active');
-            
+
             const tabId = tab.dataset.tab;
             const targetContent = document.getElementById(`tab-${tabId}`);
             if (targetContent) {
@@ -458,7 +458,7 @@ async function loadGameData() {
     try {
         const res = await fetch('/api/game_data');
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
             state.myPokemonChoices = data.my_pokemon;
             state.allPokemons = data.all_pokemons;
@@ -467,7 +467,7 @@ async function loadGameData() {
             if (data.type_chart) {
                 TYPE_CHART = data.type_chart;
             }
-            
+
             // Populate select dropdowns for simulation
             // 1. My Pokemons select (contains 2 pokemons)
             el.myPokeSelect.innerHTML = '<option value="">選択してください</option>';
@@ -477,7 +477,7 @@ async function loadGameData() {
                 opt.textContent = poke.name;
                 el.myPokeSelect.appendChild(opt);
             });
-            
+
             // 2. Enemy Pokemons select (all 72 pokemons)
             el.enemyPokeSelect.innerHTML = '<option value="">選択してください</option>';
             state.allPokemons.forEach(poke => {
@@ -509,7 +509,7 @@ el.enemyPokeSelect.addEventListener('change', checkSimSelects);
 el.startBattleBtn.addEventListener('click', () => {
     const myPokeName = el.myPokeSelect.value;
     const enemyPokeName = el.enemyPokeSelect.value;
-    
+
     startBattle(myPokeName, enemyPokeName);
 });
 
@@ -521,9 +521,9 @@ function startBattle(myPokeName, enemyPokeName) {
     // Lookup full pokemon details
     const myData = state.myPokemonChoices.find(p => p.name === myPokeName);
     const enemyData = state.allPokemons.find(p => p.name === enemyPokeName);
-    
+
     if (!myData || !enemyData) return;
-    
+
     // Create copy for battle state to track current HP
     state.battle.left = {
         name: myData.name,
@@ -542,7 +542,7 @@ function startBattle(myPokeName, enemyPokeName) {
         isPlayer: true, // Helper flag
         choiceLockMove: null
     };
-    
+
     state.battle.right = {
         name: enemyData.name,
         番号: enemyData.番号,
@@ -560,16 +560,16 @@ function startBattle(myPokeName, enemyPokeName) {
         isPlayer: false,
         choiceLockMove: null
     };
-    
+
     state.battle.turns = 0;
     state.battle.active = true;
-    
+
     // Render initial battle screen
     updateBattleUI();
     el.battleFinishOverlay.classList.add('hidden');
     if (el.battleMessageBanner) el.battleMessageBanner.classList.add('hidden');
     if (battleMessageTimeout) clearTimeout(battleMessageTimeout);
-    
+
     // Show battle screen
     showSubscreen(el.simBattleSubscreen);
 }
@@ -577,47 +577,47 @@ function startBattle(myPokeName, enemyPokeName) {
 function updateBattleUI() {
     const left = state.battle.left;
     const right = state.battle.right;
-    
+
     // Left side UI (Controlled pokemon)
     el.myBattleName.textContent = left.name;
     el.myBattleLevel.textContent = `Lv.${left.level}`;
     el.myCurrHp.textContent = left.currHp;
     el.myMaxHp.textContent = left.maxHp;
-    
+
     const leftTypes = [left.type1, left.type2].filter(t => t).join('/');
     el.myBattleTypes.textContent = leftTypes;
-    
+
     // HP bar calculations
     const leftHpPercent = Math.max(0, (left.currHp / left.maxHp) * 100);
     el.myHpFill.style.width = `${leftHpPercent}%`;
     setHpBarColor(el.myHpFill, leftHpPercent);
-    
+
     // Sprite images based on sprite sheet
     setPokemonSprite(el.mySprite, left.番号, left.name);
     updateMatchupDisplay(left, 'my-matchup-effective', 'my-matchup-ineffective');
-    
+
     // Right side UI (Target pokemon)
     el.enemyBattleName.textContent = right.name;
     el.enemyBattleLevel.textContent = `Lv.${right.level}`;
     el.enemyCurrHp.textContent = right.currHp;
     el.enemyMaxHp.textContent = right.maxHp;
-    
+
     const rightTypes = [right.type1, right.type2].filter(t => t).join('/');
     el.enemyBattleTypes.textContent = rightTypes;
-    
+
     const rightHpPercent = Math.max(0, (right.currHp / right.maxHp) * 100);
     el.enemyHpFill.style.width = `${rightHpPercent}%`;
     setHpBarColor(el.enemyHpFill, rightHpPercent);
     setPokemonSprite(el.enemySprite, right.番号, right.name);
     updateMatchupDisplay(right, 'enemy-matchup-effective', 'enemy-matchup-ineffective');
-    
+
     // Turn counter removed
-    
+
     // Load moves for active left side pokemon
     for (let i = 0; i < 4; i++) {
         const btn = el.moveBtns[i];
         const move = left.moves[i];
-        
+
         if (move) {
             const isChoiceItem = (left.item === 'こだわりハチマキ' || left.item === 'こだわりメガネ');
             if (isChoiceItem && left.choiceLockMove && move.name !== left.choiceLockMove) {
@@ -671,24 +671,24 @@ function setPokemonSprite(element, pokemonNumber, nameFallback = '') {
     element.textContent = '';
     element.style.backgroundImage = 'none';
     element.classList.remove('pokemon-sprite');
-    
+
     if (!pokemonNumber) {
         element.textContent = getPokeEmoji(nameFallback);
         return;
     }
-    
+
     const N = parseInt(pokemonNumber, 10);
     const row = Math.floor((N - 1) / 10);
     const col = (N - 1) % 10;
-    
+
     const spriteInner = document.createElement('div');
     spriteInner.classList.add('pokemon-sprite');
-    
+
     // Percentage positioning
     const posX = (col * 100) / 9;
     const posY = (row * 100) / 9;
     spriteInner.style.backgroundPosition = `${posX}% ${posY}%`;
-    
+
     element.appendChild(spriteInner);
 }
 
@@ -738,17 +738,17 @@ function updateMatchupDisplay(poke, effectiveElId, ineffectiveElId) {
 // Calculate type multiplier
 function getTypeMultiplier(moveType, defender) {
     let m = 1.0;
-    
+
     // Check type 1
     if (defender.type1 && TYPE_CHART[moveType] && TYPE_CHART[moveType][defender.type1] !== undefined) {
         m *= TYPE_CHART[moveType][defender.type1];
     }
-    
+
     // Check type 2
     if (defender.type2 && TYPE_CHART[moveType] && TYPE_CHART[moveType][defender.type2] !== undefined) {
         m *= TYPE_CHART[moveType][defender.type2];
     }
-    
+
     return m;
 }
 
@@ -761,11 +761,11 @@ function calculateDamage(attacker, defender, move) {
     }
     const level = attacker.level;
     const power = move.power;
-    
+
     // Determine stats A and D based on category
     let A = 0;
     let D = 0;
-    
+
     if (move.category === '物理') {
         A = attacker.attack;
         D = defender.defense;
@@ -773,23 +773,23 @@ function calculateDamage(attacker, defender, move) {
         A = attacker.spAttack;
         D = defender.spDefense;
     }
-    
+
     // Fallback if stats are zero or missing
     if (A <= 0) A = 1;
     if (D <= 0) D = 1;
-    
+
     // Level bracket: Math.floor(level * 2 / 5) + 2
     const term1 = Math.floor(level * 2 / 5) + 2;
-    
+
     // Power & Ratio: Math.floor(term1 * power * A / D)
     const term2 = Math.floor((term1 * power * A) / D);
-    
+
     // Scale and constant: Math.floor(term2 / 50) + 2
     const term3 = Math.floor(term2 / 50) + 2;
-    
+
     // Type chart modifier M
     let M = getTypeMultiplier(move.type, defender);
-    
+
     // Same-type attack bonus (STAB) multiplier
     if (attacker.type1 === move.type || attacker.type2 === move.type) {
         M *= 1.2;
@@ -854,18 +854,18 @@ function calculateDamage(attacker, defender, move) {
     if (defItem && typeBerryMap[move.type] === defItem) {
         M *= 0.5;
     }
-    
+
     // Final product: Math.floor(term3 * M)
     let damage = Math.floor(term3 * M);
     if (attItem === 'いのちのたま') {
         damage = Math.floor(damage * 1.2);
     }
-    
+
     // Correct if result is 0
     if (damage <= 0) {
         damage = 1;
     }
-    
+
     return damage;
 }
 
@@ -914,22 +914,22 @@ function getItemEffectText(itemName) {
 el.movesPanel.addEventListener('click', async (e) => {
     const btn = e.target.closest('.move-box');
     if (!btn || btn.disabled || !state.battle.active) return;
-    
+
     const moveIdx = parseInt(btn.dataset.idx, 10);
     const attacker = state.battle.left;
     const defender = state.battle.right;
     const move = attacker.moves[moveIdx];
-    
+
     if (!move) return;
-    
+
     // Set choice lock for simulation mode
     if ((attacker.item === 'こだわりハチマキ' || attacker.item === 'こだわりメガネ') && !attacker.choiceLockMove) {
         attacker.choiceLockMove = move.name;
     }
-    
+
     // Disable moves to prevent double clicking during resolution
     el.moveBtns.forEach(b => b.disabled = true);
-    
+
     const attItem = attacker.item;
     const defItem = defender.item;
     const moveType = move.type;
@@ -1009,10 +1009,10 @@ el.movesPanel.addEventListener('click', async (e) => {
     }
 
     defender.currHp = Math.max(0, defender.currHp - dmg);
-    
+
     // Progress turns
     state.battle.turns += 1;
-    
+
     // Display type effectiveness message based on multiplier
     const mult = getTypeMultiplier(move.type, defender);
     if (mult > 1.0) {
@@ -1022,16 +1022,16 @@ el.movesPanel.addEventListener('click', async (e) => {
     } else if (mult === 0) {
         showBattleMessage("こうかがない　ようだ…");
     }
-    
+
     // Add visual hit effect to enemy card
     el.enemyBattleCard.classList.add('shake');
     setTimeout(() => {
         el.enemyBattleCard.classList.remove('shake');
     }, 200);
-    
+
     // Update HP values and bars in the UI
     updateBattleUI();
-    
+
     // Check if target is defeated initially
     if (defender.currHp <= 0) {
         finishBattle(defender.name + "を倒した！");
@@ -1101,7 +1101,7 @@ el.movesPanel.addEventListener('click', async (e) => {
             updateBattleUI();
         }
     }
-    
+
     // Check if target is defeated at the end of turn
     if (defender.currHp <= 0) {
         finishBattle(defender.name + "を倒した！");
@@ -1118,26 +1118,26 @@ el.movesPanel.addEventListener('click', async (e) => {
 // Swap button logic: swaps Left and Right pokemon and updates moves
 el.swapBtn.addEventListener('click', () => {
     if (!state.battle.active) return;
-    
+
     // Rotate cards visually
     el.myBattleCard.style.transform = 'scale(0.9)';
     el.enemyBattleCard.style.transform = 'scale(0.9)';
-    
+
     setTimeout(() => {
         // Swap state
         const temp = state.battle.left;
         state.battle.left = state.battle.right;
         state.battle.right = temp;
-        
+
         if (state.battle.left) state.battle.left.choiceLockMove = null;
         if (state.battle.right) state.battle.right.choiceLockMove = null;
-        
+
         updateBattleUI();
-        
+
         // Hide message banner on swap
         if (el.battleMessageBanner) el.battleMessageBanner.classList.add('hidden');
         if (battleMessageTimeout) clearTimeout(battleMessageTimeout);
-        
+
         el.myBattleCard.style.transform = 'scale(1)';
         el.enemyBattleCard.style.transform = 'scale(1)';
     }, 150);
@@ -1146,10 +1146,10 @@ el.swapBtn.addEventListener('click', () => {
 // Battle finished
 function finishBattle(msg) {
     state.battle.active = false;
-    
+
     // Disable all move buttons
     el.moveBtns.forEach(btn => btn.disabled = true);
-    
+
     // Set overlay texts
     el.finishResultText.textContent = msg;
     el.battleFinishOverlay.classList.remove('hidden');
@@ -1158,12 +1158,12 @@ function finishBattle(msg) {
 // Reset and go back to selection screen
 el.finishCloseBtn.addEventListener('click', () => {
     el.battleFinishOverlay.classList.add('hidden');
-    
+
     // Reset selects and refresh game data lists just in case
     el.myPokeSelect.value = "";
     el.enemyPokeSelect.value = "";
     el.startBattleBtn.disabled = true;
-    
+
     showSubscreen(el.simSelectSubscreen);
 });
 
@@ -1174,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabNavigation();
     initShopTab();
     initStrengthTab();
-    
+
     const savedUserId = sessionStorage.getItem('user_id');
     if (savedUserId) {
         state.userId = savedUserId;
@@ -1323,7 +1323,7 @@ function selectShopBuyItem(item) {
 
     document.getElementById('shop-buy-detail-name').textContent = item['名前'];
     document.getElementById('shop-buy-detail-category').textContent = item['分類'];
-    
+
     let effectHtml = item['効果'].replace(/\n/g, '<br>');
     if (item['分類'] === 'わざマシン') {
         const moveDetails = getTMMoveDetails(item['名前']);
@@ -1380,7 +1380,7 @@ function selectShopSellItem(item) {
     const sellPrice = Math.floor(item['値段'] / 2);
     document.getElementById('shop-sell-detail-name').textContent = item['名前'];
     document.getElementById('shop-sell-detail-category').textContent = item['分類'];
-    
+
     let effectHtml = item['効果'].replace(/\n/g, '<br>');
     if (item['分類'] === 'わざマシン') {
         const moveDetails = getTMMoveDetails(item['名前']);
@@ -1523,7 +1523,7 @@ async function initShopTab() {
             state.shopCategory = btn.dataset.category;
             updateShopSubTabUI('shop-buy-sub-tabs');
             renderShopBuyList();
-            
+
             // Reset detail panel on category switch
             document.getElementById('shop-buy-placeholder').style.display = '';
             document.getElementById('shop-buy-detail').classList.remove('visible');
@@ -1568,7 +1568,7 @@ shopTab.addEventListener('click', async () => {
             state.movesList = data.moves || [];
             updateMoneyDisplays();
         }
-    } catch (e) {}
+    } catch (e) { }
     showShopChooseScreen();
 });
 
@@ -1586,7 +1586,7 @@ bagTab.addEventListener('click', async () => {
             updateMoneyDisplays();
             renderBagTab();
         }
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // ============================================================
@@ -1603,7 +1603,7 @@ function renderBagTab() {
 
     document.getElementById('bag-detail-placeholder').style.display = '';
     document.getElementById('bag-detail-content').classList.remove('visible');
-    
+
     const useBtn = document.getElementById('bag-use-btn');
     useBtn.disabled = true;
     currentSelectedBagItem = null;
@@ -1622,7 +1622,7 @@ function renderBagTab() {
         row.addEventListener('click', () => {
             list.querySelectorAll('.bag-item-row').forEach(r => r.classList.remove('selected'));
             row.classList.add('selected');
-            
+
             let itemData = state.shopItems.find(i => i['名前'] === itemName);
             if (!itemData && itemName === 'ちからのもと') {
                 itemData = {
@@ -1645,7 +1645,7 @@ function showBagDetail(item) {
 
     document.getElementById('bag-detail-name').textContent = item['名前'];
     document.getElementById('bag-detail-category').textContent = item['分類'];
-    
+
     let effectHtml = item['効果'].replace(/\n/g, '<br>');
     if (item['分類'] === 'わざマシン') {
         const moveDetails = getTMMoveDetails(item['名前']);
@@ -1687,7 +1687,7 @@ let bagWorkflowState = {
 // Open overlay and start flow
 document.getElementById('bag-use-btn').addEventListener('click', async () => {
     if (!currentSelectedBagItem) return;
-    
+
     try {
         const res = await fetch('/api/game_data');
         const data = await res.json();
@@ -1704,9 +1704,9 @@ document.getElementById('bag-use-btn').addEventListener('click', async () => {
     }
 
     bagWorkflowState.item = currentSelectedBagItem;
-    
+
     showBagDialog(bagDialogSelectPoke);
-    
+
     const isTM = currentSelectedBagItem['分類'] === 'わざマシン';
     const isPower = currentSelectedBagItem['分類'] === 'ちからのもと';
     if (isPower) {
@@ -1714,16 +1714,16 @@ document.getElementById('bag-use-btn').addEventListener('click', async () => {
     } else {
         document.getElementById('bag-select-title').textContent = isTM ? "どちらのポケモンに使いますか？" : "どちらのポケモンに装備させますか？";
     }
-    
+
     const opt1 = document.getElementById('bag-poke-opt-1');
     const opt2 = document.getElementById('bag-poke-opt-2');
-    
+
     opt1.textContent = bagWorkflowState.pokemonList[0] ? bagWorkflowState.pokemonList[0].name : "-";
     opt1.style.display = bagWorkflowState.pokemonList[0] ? "" : "none";
-    
+
     opt2.textContent = bagWorkflowState.pokemonList[1] ? bagWorkflowState.pokemonList[1].name : "-";
     opt2.style.display = bagWorkflowState.pokemonList[1] ? "" : "none";
-    
+
     bagOverlay.classList.remove('hidden');
 });
 
@@ -1741,7 +1741,7 @@ function hideBagOverlay() {
 document.getElementById('bag-select-cancel-btn').addEventListener('click', hideBagOverlay);
 
 [0, 1].forEach(idx => {
-    document.getElementById(`bag-poke-opt-${idx+1}`).addEventListener('click', () => {
+    document.getElementById(`bag-poke-opt-${idx + 1}`).addEventListener('click', () => {
         bagWorkflowState.selectedPokeIndex = idx;
         const poke = bagWorkflowState.pokemonList[idx];
         if (!poke) return;
@@ -1793,7 +1793,7 @@ document.getElementById('bag-equip-ok-btn').addEventListener('click', async () =
             state.ownedItems = data.owned_items;
             await loadGameData();
             renderBagTab();
-            
+
             showBagDialog(bagDialogResult);
             document.getElementById('bag-result-msg').textContent = `${poke.name}は、「${bagWorkflowState.item['名前']}」を装備しました！`;
         } else {
@@ -1816,7 +1816,7 @@ for (let mIdx = 0; mIdx < 4; mIdx++) {
         bagWorkflowState.selectedMoveIndex = mIdx;
         const poke = bagWorkflowState.pokemonList[bagWorkflowState.selectedPokeIndex];
         const oldMoveName = poke.moves[mIdx] ? poke.moves[mIdx].name : "-";
-        
+
         const tmName = bagWorkflowState.item['名前'];
         let moveName = "";
         const match = tmName.match(/\(([^)]+)\)/);
@@ -1840,7 +1840,7 @@ document.getElementById('bag-learn-cancel-btn').addEventListener('click', () => 
 document.getElementById('bag-learn-ok-btn').addEventListener('click', async () => {
     const poke = bagWorkflowState.pokemonList[bagWorkflowState.selectedPokeIndex];
     const tmName = bagWorkflowState.item['名前'];
-    
+
     let moveName = "";
     const match = tmName.match(/\(([^)]+)\)/);
     if (match) {
@@ -1866,7 +1866,7 @@ document.getElementById('bag-learn-ok-btn').addEventListener('click', async () =
             state.ownedItems = data.owned_items;
             await loadGameData();
             renderBagTab();
-            
+
             showBagDialog(bagDialogResult);
             document.getElementById('bag-result-msg').textContent = `${poke.name}は、「${moveName}」をおぼえた！`;
         } else {
@@ -1945,7 +1945,7 @@ function renderShopSellList() {
         row.addEventListener('click', () => {
             list.querySelectorAll('.shop-item-row').forEach(r => r.classList.remove('selected'));
             row.classList.add('selected');
-            
+
             let itemData = state.shopItems.find(i => i['名前'] === itemName);
             if (!itemData && itemName === 'ちからのもと') {
                 itemData = {
@@ -2000,7 +2000,7 @@ function initStrengthTab() {
     document.getElementById('detail-moves-btn').addEventListener('click', () => {
         const poke = state.myPokemonChoices[state.strengthSelectedPokeIdx];
         if (!poke) return;
-        
+
         for (let i = 0; i < 4; i++) {
             const moveCard = document.getElementById(`detail-move-${i}`);
             const move = poke.moves[i];
@@ -2056,7 +2056,7 @@ function initStrengthTab() {
 
 function renderStrengthTab() {
     const pokes = state.myPokemonChoices;
-    
+
     document.getElementById('strength-detail').classList.add('hidden');
     document.getElementById('strength-overview').classList.remove('hidden');
 
@@ -2064,7 +2064,7 @@ function renderStrengthTab() {
         const card = document.getElementById(`strength-poke-${i}`);
         const nameEl = document.getElementById(`strength-poke-name-${i}`);
         const emojiEl = document.getElementById(`strength-poke-emoji-${i}`);
-        
+
         const poke = pokes[i];
         if (poke) {
             card.style.visibility = 'visible';
@@ -2094,12 +2094,12 @@ function showStrengthDetail(poke) {
     document.getElementById('detail-sp-defense').textContent = poke.sp_defense;
 
     document.getElementById('detail-name').textContent = poke.name;
-    
+
     const typesStr = [poke.type1, poke.type2].filter(t => t).join(' / ');
     document.getElementById('detail-types').textContent = typesStr || "-";
-    
+
     setPokemonSprite(document.getElementById('detail-sprite'), poke.番号, poke.name);
-    
+
     const itemEl = document.getElementById('detail-item');
     const unequipBtn = document.getElementById('detail-unequip-btn');
     if (poke.item) {
@@ -2132,7 +2132,7 @@ function showBattleSubview(subviewId) {
 
 async function startBattlePolling() {
     if (battlePollingInterval) clearInterval(battlePollingInterval);
-    
+
     async function poll() {
         try {
             const res = await fetch('/api/battle/status');
@@ -2169,7 +2169,7 @@ async function startBattlePolling() {
             console.error("Battle polling error:", e);
         }
     }
-    
+
     await poll();
     battlePollingInterval = setInterval(poll, 1500);
 }
@@ -2209,7 +2209,7 @@ function updateBattlePlayerArena(data) {
             btn.querySelector('.move-type').textContent = m.type;
             btn.querySelector('.move-power').textContent = `威力 ${m.power}`;
             btn.style.display = '';
-            
+
             // Grey out move button if move selected or target fainted, or if choice locked
             const isChoiceItem = (myPoke.item === 'こだわりハチマキ' || myPoke.item === 'こだわりメガネ');
             if (data.my_selected_move || myPoke.hp <= 0 || (isChoiceItem && myPoke.choice_lock && m.name !== myPoke.choice_lock)) {
@@ -2275,7 +2275,7 @@ document.getElementById('battle-start-grading-btn').addEventListener('click', as
         if (res.ok) {
             showBattleSubview('battle-grader-subview');
         }
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // Grader Exit
@@ -2283,14 +2283,14 @@ document.getElementById('grader-exit-btn').addEventListener('click', async () =>
     try {
         await fetch('/api/battle/grader/leave', { method: 'POST' });
         showBattleSubview('battle-mode-selection');
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // Grader submit points
 document.querySelectorAll('.grader-point-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         const pt = parseInt(btn.dataset.point, 10);
-        
+
         // Grey out buttons until score confirmed
         document.querySelectorAll('.grader-point-btn').forEach(b => b.disabled = true);
 
@@ -2325,14 +2325,14 @@ document.querySelectorAll('.grader-point-btn').forEach(btn => {
 for (let i = 0; i < 4; i++) {
     document.getElementById(`p-move-${i}`).addEventListener('click', async () => {
         if (!state.myPokemonChoices || state.myPokemonChoices.length === 0) return;
-        
+
         // Find selected move
         try {
             const statusRes = await fetch('/api/battle/status');
             const statusData = await statusRes.json();
             const myPoke = statusData.my_pokemon[statusData.my_active_idx];
             const m = myPoke.moves[i];
-            
+
             const res = await fetch('/api/battle/select_move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2348,7 +2348,7 @@ for (let i = 0; i < 4; i++) {
             } else {
                 alert(data.message);
             }
-        } catch (e) {}
+        } catch (e) { }
     });
 }
 
@@ -2360,7 +2360,7 @@ document.getElementById('p-back-btn').addEventListener('click', async () => {
         if (data.success) {
             // UI updates automatically on next poll
         }
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // Swap Pokemon Request button
@@ -2369,7 +2369,7 @@ document.getElementById('p-swap-btn').addEventListener('click', async () => {
         const res = await fetch('/api/battle/request_swap', { method: 'POST' });
         const data = await res.json();
         alert(data.message);
-    } catch (e) {}
+    } catch (e) { }
 });
 
 // Trigger battle polling when battle tab is selected
