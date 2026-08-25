@@ -1,9 +1,11 @@
 import os
 import re
 from flask import Flask, request, jsonify, render_template, session
+from flask_cors import CORS
 import openpyxl
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
+CORS(app)
 app.secret_key = 'pk_ogiri_secret_key_13579'
 
 def get_current_user_id():

@@ -1,11 +1,19 @@
 // Type chart loaded dynamically from JSON
 let TYPE_CHART = {};
 
+// ngrok URL (Change this to your current ngrok URL!)
+const API_BASE_URL = "https://CHANGE_ME.ngrok-free.app";
+
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
 window.fetch = function(url, options) {
     options = options || {};
     options.headers = options.headers || {};
+    
+    // Automatically prepend ngrok base URL for absolute paths to Flask API
+    if (url.startsWith('/api') || url.startsWith('/static')) {
+        url = API_BASE_URL + url;
+    }
     
     const userId = sessionStorage.getItem('user_id') || (typeof state !== 'undefined' ? state.userId : '');
     if (userId) {
