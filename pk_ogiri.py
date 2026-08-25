@@ -182,7 +182,7 @@ def calculate_battle_damage(attacker, defender, move):
 
     damage = math.floor(term3 * M)
     if att_item == 'いのちのたま':
-        damage += 15
+        damage = math.floor(damage * 1.2)
 
     if damage <= 0:
         damage = 1
@@ -383,11 +383,11 @@ def register():
     user_id = data.get('user_id', '').strip()
     name = data.get('name', '').strip()
 
-    # Validation: Roman letters only, 4 characters or more
-    if not re.match(r'^[a-zA-Z]{4,}$', user_id):
+    # Validation: Alphanumeric, 4 characters or more
+    if not re.match(r'^[a-zA-Z0-9]{4,}$', user_id):
         return jsonify({
             "success": False,
-            "message": "ユーザーIDは4文字以上の半角ローマ字（アルファベット）のみで入力してください。"
+            "message": "ユーザーIDは4文字以上の半角英数字で入力してください。"
         }), 400
 
     if not name:
@@ -1383,7 +1383,7 @@ def confirm_score_internal():
 
         # 9. Leftovers
         if att_item == 'たべのこし' and attacker_poke['hp'] > 0:
-            heal_amt = attacker_poke['max_hp'] // 8
+            heal_amt = attacker_poke['max_hp'] // 12
             attacker_poke['hp'] = min(attacker_poke['max_hp'], attacker_poke['hp'] + heal_amt)
             active_battle["messages"].append(f"もちもの”たべのこし”が発動！{get_item_effect_text('たべのこし')}")
             active_battle["messages"].append(f"{attacker_poke['name']}のHPが {heal_amt} 回復した！")
@@ -1440,6 +1440,7 @@ def confirm_score_internal():
 
         elif attacker_poke['hp'] <= 0:
             active_battle["messages"].append(f"{attacker_poke['name']}はたおれた！")
+            attacker_poke['choice_lock'] = None
             # Switch to 2nd pokemon if available
             att_active_idx_key = f"{attacker_role.lower()}_active_idx"
             current_att_idx = active_battle[att_active_idx_key]

@@ -179,6 +179,16 @@ function routeUserStatus(status, pokemon1, pokemon2) {
         el.waitingUsername.textContent = state.userId;
         showScreen(el.waitingScreen);
         startPolling();
+    } else if (status === 'ready') {
+        loadGameData().then(() => {
+            el.obtainedName1.textContent = pokemon1;
+            el.obtainedName2.textContent = pokemon2;
+            const poke1 = state.allPokemons.find(p => p.name === pokemon1);
+            const poke2 = state.allPokemons.find(p => p.name === pokemon2);
+            setPokemonSprite(document.getElementById('obtained-sprite-1'), poke1 ? poke1.番号 : null, pokemon1);
+            setPokemonSprite(document.getElementById('obtained-sprite-2'), poke2 ? poke2.番号 : null, pokemon2);
+            showScreen(el.getScreen);
+        });
     }
 }
 
@@ -246,9 +256,9 @@ el.registerBtn.addEventListener('click', async () => {
         return;
     }
     
-    // Regexp validation check: only raw letters, 4 chars or more
-    if (!/^[a-zA-Z]{4,}$/.test(userId)) {
-        showAuthError("ユーザーIDは4文字以上の半角ローマ字（アルファベットのみ）にしてください。");
+    // Regexp validation check: alphanumeric, 4 chars or more
+    if (!/^[a-zA-Z0-9]{4,}$/.test(userId)) {
+        showAuthError("ユーザーIDは4文字以上の半角英数字にしてください。");
         return;
     }
     
@@ -382,7 +392,14 @@ function startPolling() {
                     // Show celebration screen
                     el.obtainedName1.textContent = data.pokemon1;
                     el.obtainedName2.textContent = data.pokemon2;
-                    showScreen(el.getScreen);
+                    
+                    loadGameData().then(() => {
+                        const poke1 = state.allPokemons.find(p => p.name === data.pokemon1);
+                        const poke2 = state.allPokemons.find(p => p.name === data.pokemon2);
+                        setPokemonSprite(document.getElementById('obtained-sprite-1'), poke1 ? poke1.番号 : null, data.pokemon1);
+                        setPokemonSprite(document.getElementById('obtained-sprite-2'), poke2 ? poke2.番号 : null, data.pokemon2);
+                        showScreen(el.getScreen);
+                    });
                 }
             }
         } catch (err) {
@@ -569,6 +586,7 @@ function updateBattleUI() {
     
     // Sprite images based on sprite sheet
     setPokemonSprite(el.mySprite, left.番号, left.name);
+    updateMatchupDisplay(left, 'my-matchup-effective', 'my-matchup-ineffective');
     
     // Right side UI (Target pokemon)
     el.enemyBattleName.textContent = right.name;
@@ -583,6 +601,7 @@ function updateBattleUI() {
     el.enemyHpFill.style.width = `${rightHpPercent}%`;
     setHpBarColor(el.enemyHpFill, rightHpPercent);
     setPokemonSprite(el.enemySprite, right.番号, right.name);
+    updateMatchupDisplay(right, 'enemy-matchup-effective', 'enemy-matchup-ineffective');
     
     // Turn counter removed
     
@@ -668,6 +687,45 @@ function setPokemonSprite(element, pokemonNumber, nameFallback = '') {
 // ----------------------------------------------------
 // DAMAGE FORMULA & CALCULATION
 // ----------------------------------------------------
+
+// Calculate matchups based on defender types
+function getMatchups(type1, type2) {
+    const types = ["ノーマル", "ほのお", "みず", "でんき", "くさ", "こおり", "かくとう", "どく", "じめん", "ひこう", "エスパー", "むし", "いわ", "ゴースト", "ドラゴン", "あく", "はがね", "フェアリー"];
+    const effective = [];
+    const ineffective = [];
+    for (let attacking_type of types) {
+        let m = 1.0;
+        if (type1 && TYPE_CHART[attacking_type] && TYPE_CHART[attacking_type][type1] !== undefined) {
+            m *= TYPE_CHART[attacking_type][type1];
+        }
+        if (type2 && TYPE_CHART[attacking_type] && TYPE_CHART[attacking_type][type2] !== undefined) {
+            m *= TYPE_CHART[attacking_type][type2];
+        }
+        if (m > 1.0) {
+            effective.push(attacking_type);
+        } else if (m < 1.0) {
+            ineffective.push(attacking_type);
+        }
+    }
+    return { effective, ineffective };
+}
+
+// Helper to update matchup displays
+function updateMatchupDisplay(poke, effectiveElId, ineffectiveElId) {
+    const effectiveEl = document.getElementById(effectiveElId);
+    const ineffectiveEl = document.getElementById(ineffectiveElId);
+    if (!effectiveEl || !ineffectiveEl) return;
+
+    if (!poke || (!poke.type1 && !poke.type2)) {
+        effectiveEl.textContent = '-';
+        ineffectiveEl.textContent = '-';
+        return;
+    }
+
+    const { effective, ineffective } = getMatchups(poke.type1, poke.type2);
+    effectiveEl.textContent = effective.length > 0 ? effective.join(', ') : 'なし';
+    ineffectiveEl.textContent = ineffective.length > 0 ? ineffective.join(', ') : 'なし';
+}
 
 // Calculate type multiplier
 function getTypeMultiplier(moveType, defender) {
@@ -792,7 +850,7 @@ function calculateDamage(attacker, defender, move) {
     // Final product: Math.floor(term3 * M)
     let damage = Math.floor(term3 * M);
     if (attItem === 'いのちのたま') {
-        damage += 15;
+        damage = Math.floor(damage * 1.2);
     }
     
     // Correct if result is 0
@@ -1015,7 +1073,7 @@ el.movesPanel.addEventListener('click', async (e) => {
 
     // 9. Leftovers
     if (attItem === 'たべのこし' && attacker.currHp > 0) {
-        const healAmt = Math.floor(attacker.maxHp / 8);
+        const healAmt = Math.floor(attacker.maxHp / 12);
         await sleep(1000);
         attacker.currHp = Math.min(attacker.maxHp, attacker.currHp + healAmt);
         showBattleMessage(`もちもの”たべのこし”が発動！\n${getItemEffectText('たべのこし')}`);
@@ -2122,6 +2180,7 @@ function updateBattlePlayerArena(data) {
     document.getElementById('p-my-hp-val').textContent = `${myPoke.hp}/${myPoke.max_hp}`;
     document.getElementById('p-my-types').textContent = [myPoke.type1, myPoke.type2].filter(t => t).join('/');
     setPokemonSprite(document.getElementById('p-my-sprite'), myPoke.番号, myPoke.name);
+    updateMatchupDisplay(myPoke, 'p-my-matchup-effective', 'p-my-matchup-ineffective');
 
     // Opp Poke Card details
     document.getElementById('p-opp-name').textContent = oppPoke.name;
@@ -2131,6 +2190,7 @@ function updateBattlePlayerArena(data) {
     document.getElementById('p-opp-hp-val').textContent = `${oppPoke.hp}/${oppPoke.max_hp}`;
     document.getElementById('p-opp-types').textContent = [oppPoke.type1, oppPoke.type2].filter(t => t).join('/');
     setPokemonSprite(document.getElementById('p-opp-sprite'), oppPoke.番号, oppPoke.name);
+    updateMatchupDisplay(oppPoke, 'p-opp-matchup-effective', 'p-opp-matchup-ineffective');
 
     // Update moves buttons
     for (let i = 0; i < 4; i++) {

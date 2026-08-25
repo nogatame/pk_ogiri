@@ -96,11 +96,11 @@
                 
                 <div class="obtained-container">
                     <div class="obtained-poke-card" id="obtained-1">
-                        <div class="poke-icon">⚡</div>
+                        <div class="poke-icon" id="obtained-sprite-1">⚡</div>
                         <div class="poke-name" id="obtained-name-1">-</div>
                     </div>
                     <div class="obtained-poke-card" id="obtained-2">
-                        <div class="poke-icon">💧</div>
+                        <div class="poke-icon" id="obtained-sprite-2">💧</div>
                         <div class="poke-name" id="obtained-name-2">-</div>
                     </div>
                 </div>
@@ -304,6 +304,10 @@
                         <div id="player-arena-layout" style="display: flex; flex-direction: column; gap: 15px; height: 100%;">
                             <!-- Opponent Pokemon Card -->
                             <div class="poke-battle-card" id="p-battle-card-opp" style="margin-bottom: 0;">
+                                <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="p-opp-matchup-effective" style="color: #fff;">-</span></div>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="p-opp-matchup-ineffective" style="color: #fff;">-</span></div>
+                                </div>
                                 <div class="poke-info">
                                     <div class="poke-name-row">
                                         <span class="poke-battle-name" id="p-opp-name">-</span>
@@ -322,6 +326,10 @@
 
                             <!-- My Active Pokemon Card -->
                             <div class="poke-battle-card" id="p-battle-card-my" style="margin-bottom: 0;">
+                                <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="p-my-matchup-effective" style="color: #fff;">-</span></div>
+                                    <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="p-my-matchup-ineffective" style="color: #fff;">-</span></div>
+                                </div>
                                 <div class="poke-info">
                                     <div class="poke-name-row">
                                         <span class="poke-battle-name" id="p-my-name">-</span>
@@ -451,6 +459,10 @@
                             <div id="battle-arena">
                                 <!-- My Side -->
                                 <div class="poke-battle-card" id="my-battle-card">
+                                    <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="my-matchup-effective" style="color: #fff;">-</span></div>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="my-matchup-ineffective" style="color: #fff;">-</span></div>
+                                    </div>
                                     <div class="poke-info">
                                         <div class="poke-name-row">
                                             <span class="poke-battle-name" id="my-battle-name">-</span>
@@ -478,6 +490,10 @@
                                 
                                 <!-- Enemy Side -->
                                 <div class="poke-battle-card" id="enemy-battle-card">
+                                    <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="enemy-matchup-effective" style="color: #fff;">-</span></div>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="enemy-matchup-ineffective" style="color: #fff;">-</span></div>
+                                    </div>
                                     <div class="poke-info">
                                         <div class="poke-name-row">
                                             <span class="poke-battle-name" id="enemy-battle-name">-</span>
