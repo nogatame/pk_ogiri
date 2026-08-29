@@ -1599,3 +1599,24 @@ body {
 #p-my-sprite .pokemon-sprite {
     transform: scaleX(-1);
 }
+
+/* Scale down screen on devices with limited vertical space (landscape phones) to prevent clipping */
+@media (max-height: 640px) {
+    #app-container {
+        transform: scale(0.85);
+        transform-origin: center center;
+    }
+}
+@media (max-height: 500px) {
+    #app-container {
+        transform: scale(0.75);
+        transform-origin: center center;
+    }
+}
+@media (max-height: 400px) {
+    #app-container {
+        transform: scale(0.65);
+        transform-origin: center center;
+    }
+}
+
