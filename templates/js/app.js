@@ -1,8 +1,8 @@
 // Type chart loaded dynamically from JSON
 let TYPE_CHART = {};
 
-// ngrok URL (Change this to your current ngrok URL!)
-const API_BASE_URL = "https://pk-ogiri-a.localtunnel.me";
+// Set API base URL dynamically based on the current page origin
+const API_BASE_URL = window.location.origin;
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
