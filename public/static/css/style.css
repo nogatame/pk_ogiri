@@ -1462,43 +1462,43 @@ body {
     flex-direction: column;
     height: 100%;
     width: 100%;
-    padding: 20px 20px 80px 20px; /* space for footer */
+    padding: 10px 20px 60px 20px; /* space for footer */
     position: relative;
 }
 .detail-split-container {
     display: flex;
     flex: 1;
     width: 100%;
-    gap: 20px;
+    gap: 12px;
 }
 .detail-left-half, .detail-right-half {
     flex: 1;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--border-radius);
-    padding: 20px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
 }
 .detail-sec-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--text-primary);
     border-bottom: 2px solid var(--card-border);
-    padding-bottom: 8px;
-    margin-bottom: 15px;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
 }
 .status-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 .status-list li {
     display: flex;
     justify-content: space-between;
-    font-size: 1rem;
+    font-size: 0.95rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 6px;
+    padding-bottom: 4px;
 }
 .status-val {
     font-weight: bold;
@@ -1507,34 +1507,34 @@ body {
 .detail-row {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 20px;
+    gap: 4px;
+    margin-bottom: 10px;
 }
 .detail-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     font-weight: bold;
 }
 .detail-val {
-    font-size: 1.1rem;
+    font-size: 1.0rem;
     color: var(--text-primary);
     font-weight: bold;
 }
 .item-holder {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
 
 /* Footer / Back & Moves buttons */
 .detail-footer {
     position: absolute;
-    bottom: 20px;
+    bottom: 10px;
     left: 20px;
     right: 20px;
     display: flex;
     justify-content: space-between;
-    height: 45px;
+    height: 40px;
 }
 .bottom-left-btn {
     width: 120px !important;
@@ -1603,6 +1603,11 @@ body {
     background-repeat: no-repeat;
     background-size: 1000% 1000%;
     image-rendering: pixelated; /* Ensure crisp pixel art */
+}
+
+#detail-sprite {
+    width: 90px;
+    height: calc(90px * 3220 / 3200);
 }
 
 /* Small variant for lists */

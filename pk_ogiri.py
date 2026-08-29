@@ -14,6 +14,11 @@ def get_current_user_id():
         return user_id.strip()
     return None
 
+def check_user_id(u1, u2):
+    if u1 is None or u2 is None:
+        return False
+    return str(u1).strip() == str(u2).strip()
+
 # --- Real-Time Battle State ---
 # Waiting queues and active state
 battle_waiting_players = set()  # Set of user_ids waiting to battle
@@ -402,7 +407,7 @@ def register():
 
     # Check duplicate
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             return jsonify({
                 "success": False,
                 "message": "このユーザーIDは既に登録されています。"
@@ -444,7 +449,7 @@ def login():
 
     player = None
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             player = p
             break
 
@@ -1549,7 +1554,7 @@ def admin_battle_status():
     players_data = get_players()
     waiting_list = []
     for pid in battle_waiting_players:
-        p_info = next((p for p in players_data if p.get('ユーザid') == pid), None)
+        p_info = next((p for p in players_data if check_user_id(p.get('ユーザid'), pid)), None)
         if p_info:
             waiting_list.append({
                 "user_id": pid,
@@ -1558,7 +1563,7 @@ def admin_battle_status():
 
     grader_list = []
     for pid in grading_viewers:
-        p_info = next((p for p in players_data if p.get('ユーザid') == pid), None)
+        p_info = next((p for p in players_data if check_user_id(p.get('ユーザid'), pid)), None)
         if p_info:
             grader_list.append(p_info.get("名前") or pid)
 
@@ -1566,7 +1571,7 @@ def admin_battle_status():
     for role in ["A", "B"]:
         pid = active_battle[f"player_{role.lower()}"]
         if pid:
-            p_info = next((p for p in players_data if p.get('ユーザid') == pid), None)
+            p_info = next((p for p in players_data if check_user_id(p.get('ユーザid'), pid)), None)
             if p_info:
                 players_details[role] = p_info.get("名前") or pid
 
@@ -1591,8 +1596,8 @@ def admin_battle_start():
 
     # Retrieve players data to build pokemon list
     players_data = get_players()
-    p_a_data = next((p for p in players_data if p.get('ユーザid') == player_a), None)
-    p_b_data = next((p for p in players_data if p.get('ユーザid') == player_b), None)
+    p_a_data = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a)), None)
+    p_b_data = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b)), None)
 
     if not p_a_data or not p_b_data:
         return jsonify({"success": False, "message": "プレイヤーが見つかりません。"}), 400
