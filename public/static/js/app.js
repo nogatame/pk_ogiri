@@ -626,7 +626,7 @@ function updateBattleUI() {
                 btn.disabled = false;
             }
             btn.querySelector('.move-title').textContent = move.name;
-            btn.querySelector('.move-type').textContent = move.type;
+            btn.querySelector('.move-type').textContent = `${move.type} [${move.category || '物理'}]`;
             btn.querySelector('.move-power').textContent = `威力 ${move.power}`;
         } else {
             // Disabled if no move in slot
@@ -2007,7 +2007,7 @@ function initStrengthTab() {
             if (move && move.name && move.name !== "-") {
                 moveCard.querySelector('.detail-move-name').textContent = move.name;
                 moveCard.querySelector('.detail-move-power').textContent = `威力 ${move.power}`;
-                moveCard.querySelector('.detail-move-type').textContent = move.type;
+                moveCard.querySelector('.detail-move-type').textContent = `${move.type} [${move.category || '物理'}]`;
                 moveCard.style.visibility = 'visible';
             } else {
                 moveCard.style.visibility = 'hidden';
@@ -2210,7 +2210,7 @@ function updateBattlePlayerArena(data) {
         const m = myPoke.moves[i];
         if (m && m.name && m.name !== "-") {
             btn.querySelector('.move-title').textContent = m.name;
-            btn.querySelector('.move-type').textContent = m.type;
+            btn.querySelector('.move-type').textContent = `${m.type} [${m.category || '物理'}]`;
             btn.querySelector('.move-power').textContent = `威力 ${m.power}`;
             btn.style.display = '';
 
