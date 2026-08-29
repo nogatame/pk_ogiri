@@ -438,6 +438,15 @@
                     </div>
                 </div>
 
+                <!-- Force/Override Score for Debugging -->
+                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 10px; border-radius: 6px; border: 1px dashed var(--primary);">
+                    <span style="font-size: 0.9rem; font-weight: bold;">🛠️ デバッグ用得点強制入力:</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="debug-score-input" placeholder="点数" style="width: 80px; padding: 6px; border-radius: 4px; border: 1px solid var(--border); background: #0f172a; color: white;" min="0">
+                        <button id="force-score-btn" class="btn" style="background-color: var(--primary); font-size: 0.9rem; padding: 6px 12px; margin: 0;">点数を強制確定</button>
+                    </div>
+                </div>
+
                 <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                     <button id="undo-confirm-btn" class="btn" style="background-color: #f59e0b;">↩️ 直前の審査を取り消す</button>
                 </div>
@@ -658,6 +667,37 @@
                 const resData = await response.json();
                 if (resData.success) {
                     showToast(resData.message);
+                    fetchBattleStatus();
+                } else {
+                    showToast(resData.message, false);
+                }
+            } catch (err) {
+                showToast('通信エラーが発生しました。', false);
+            }
+        });
+
+        // Force score btn
+        document.getElementById('force-score-btn').addEventListener('click', async () => {
+            const scoreVal = document.getElementById('debug-score-input').value;
+            if (scoreVal === "") {
+                showToast("点数を入力してください。", false);
+                return;
+            }
+            if (!confirm(`本当に点数を強制的に ${scoreVal} 点で確定しますか？`)) {
+                return;
+            }
+            try {
+                const response = await fetch('/api/admin/battle/confirm_score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ forced_score: parseInt(scoreVal, 10) })
+                });
+                const resData = await response.json();
+                if (resData.success) {
+                    showToast(resData.message);
+                    document.getElementById('debug-score-input').value = "";
                     fetchBattleStatus();
                 } else {
                     showToast(resData.message, false);

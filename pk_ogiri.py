@@ -1224,7 +1224,7 @@ def grader_leave():
     return jsonify({"success": True, "message": "採点画面を離れました。"})
 
 
-def confirm_score_internal():
+def confirm_score_internal(forced_score=None):
     if not active_battle["active"]:
         return False, "アクティブなバトルはありません。"
 
@@ -1234,10 +1234,14 @@ def confirm_score_internal():
     previous_battle_state = copy.deepcopy(active_battle)
     previous_players_state = copy.deepcopy(get_players())
 
+    if forced_score is not None:
+        score = forced_score
+    else:
+        score = calculate_score(active_battle["scores"])
+
     target = active_battle["target_player"]
     if not target:
         # Grader only mode
-        score = calculate_score(active_battle["scores"])
         active_battle["last_confirmed_score"] = score
         active_battle["last_calculated_score"] = score
         active_battle["messages"].append(f"採点結果: {score}点！")
@@ -1246,7 +1250,6 @@ def confirm_score_internal():
         return True, f"得点 {score} 点を確定しました。"
 
     # Player target mode
-    score = calculate_score(active_battle["scores"])
     active_battle["last_confirmed_score"] = None  # Do not display score in battle_view
     active_battle["last_calculated_score"] = score
 
@@ -1742,7 +1745,15 @@ def admin_battle_approve_swap():
 
 @app.route('/api/admin/battle/confirm_score', methods=['POST'])
 def admin_battle_confirm_score():
-    success, msg = confirm_score_internal()
+    data = request.json or {}
+    forced_score = data.get('forced_score')
+    if forced_score is not None:
+        try:
+            forced_score = int(forced_score)
+        except ValueError:
+            return jsonify({"success": False, "message": "無効な点数です。"}), 400
+
+    success, msg = confirm_score_internal(forced_score=forced_score)
     if not success:
         return jsonify({"success": False, "message": msg}), 400
     return jsonify({"success": True, "message": msg})
