@@ -2410,7 +2410,7 @@ document.querySelectorAll('.tab-item').forEach(tab => {
 });
 
 // Leave queues on browser close/reload
-window.addEventListener('pagehide', () => {
+window.addEventListener('beforeunload', () => {
     navigator.sendBeacon('/api/battle/leave');
     navigator.sendBeacon('/api/battle/grader/leave');
 });

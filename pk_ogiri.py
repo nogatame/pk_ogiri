@@ -69,8 +69,10 @@ def save_battle_state():
             "grading_viewers": list(grading_viewers),
             "active_battle": active_battle
         }
-        with open(BATTLE_STATE_JSON_PATH, 'w', encoding='utf-8') as f:
+        temp_path = BATTLE_STATE_JSON_PATH + '.tmp'
+        with open(temp_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+        os.replace(temp_path, BATTLE_STATE_JSON_PATH)
     except Exception as e:
         print(f"Error saving battle state: {e}")
 
