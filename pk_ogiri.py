@@ -43,8 +43,40 @@ active_battle = {
     "voted_graders": [],   # List of user_ids who have already graded in this round
     "messages": [],        # History of battle log messages
     "last_confirmed_score": None,
-    "last_calculated_score": 0  # Latest calculated score for admin dashboard
+    "last_calculated_score": 0
 }
+
+BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
+
+def load_battle_state():
+    global battle_waiting_players, grading_viewers, active_battle
+    if not os.path.exists(BATTLE_STATE_JSON_PATH):
+        save_battle_state()
+        return
+    try:
+        with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        battle_waiting_players = set(data.get("waiting_players", []))
+        grading_viewers = set(data.get("grading_viewers", []))
+        active_battle = data.get("active_battle", {})
+    except Exception as e:
+        print(f"Error loading battle state: {e}")
+
+def save_battle_state():
+    try:
+        data = {
+            "waiting_players": list(battle_waiting_players),
+            "grading_viewers": list(grading_viewers),
+            "active_battle": active_battle
+        }
+        with open(BATTLE_STATE_JSON_PATH, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Error saving battle state: {e}")
+
+@app.before_request
+def before_request():
+    load_battle_state()
 
 previous_battle_state = None
 previous_players_state = None
@@ -1051,6 +1083,7 @@ def battle_join():
         return jsonify({"success": False, "message": "ログインしていません。"}), 401
     
     battle_waiting_players.add(user_id)
+    save_battle_state()
     return jsonify({"success": True, "message": "バトル待機列に参加しました。"})
 
 
@@ -1062,6 +1095,7 @@ def battle_leave():
     
     if user_id in battle_waiting_players:
         battle_waiting_players.remove(user_id)
+    save_battle_state()
     return jsonify({"success": True, "message": "バトル待機列から退出しました。"})
 
 
@@ -1129,9 +1163,9 @@ def battle_select_move():
     move_type = data.get('move_type', 'ノーマル')
 
     role = None
-    if active_battle["player_a"] == user_id:
+    if check_user_id(active_battle["player_a"], user_id):
         role = "A"
-    elif active_battle["player_b"] == user_id:
+    elif check_user_id(active_battle["player_b"], user_id):
         role = "B"
 
     if not role:
@@ -1148,6 +1182,7 @@ def battle_select_move():
     else:
         active_battle["b_selected_move"] = move_data
 
+    save_battle_state()
     return jsonify({"success": True, "message": "わざを選択しました。審査を待っています。"})
 
 
@@ -1161,9 +1196,9 @@ def battle_cancel_move():
         return jsonify({"success": False, "message": "現在アクティブなバトルはありません。"}), 400
 
     role = None
-    if active_battle["player_a"] == user_id:
+    if check_user_id(active_battle["player_a"], user_id):
         role = "A"
-    elif active_battle["player_b"] == user_id:
+    elif check_user_id(active_battle["player_b"], user_id):
         role = "B"
 
     if not role:
@@ -1182,6 +1217,7 @@ def battle_cancel_move():
             active_battle["scores"] = []
             active_battle["voted_graders"] = []
 
+    save_battle_state()
     return jsonify({"success": True, "message": "選択したわざを取り消しました。"})
 
 
@@ -1195,9 +1231,9 @@ def battle_request_swap():
         return jsonify({"success": False, "message": "現在アクティブなバトルはありません。"}), 400
 
     role = None
-    if active_battle["player_a"] == user_id:
+    if check_user_id(active_battle["player_a"], user_id):
         role = "A"
-    elif active_battle["player_b"] == user_id:
+    elif check_user_id(active_battle["player_b"], user_id):
         role = "B"
 
     if not role:
@@ -1208,6 +1244,7 @@ def battle_request_swap():
         return jsonify({"success": False, "message": "交代は1回までしかできません。"}), 400
 
     active_battle["swap_request"] = role
+    save_battle_state()
     return jsonify({"success": True, "message": "管理者に交代を申請しました。"})
 
 
@@ -1218,6 +1255,7 @@ def grader_join():
         return jsonify({"success": False, "message": "ログインしていません。"}), 401
     
     grading_viewers.add(user_id)
+    save_battle_state()
     return jsonify({"success": True, "message": "採点画面に入りました。"})
 
 
@@ -1229,6 +1267,7 @@ def grader_leave():
     
     if user_id in grading_viewers:
         grading_viewers.remove(user_id)
+    save_battle_state()
     return jsonify({"success": True, "message": "採点画面を離れました。"})
 
 
@@ -1255,6 +1294,7 @@ def confirm_score_internal(forced_score=None):
         active_battle["messages"].append(f"採点結果: {score}点！")
         active_battle["scores"] = []
         active_battle["voted_graders"] = []
+        save_battle_state()
         return True, f"得点 {score} 点を確定しました。"
 
     # Player target mode
@@ -1503,6 +1543,7 @@ def confirm_score_internal(forced_score=None):
     active_battle["scores"] = []
     active_battle["voted_graders"] = []
 
+    save_battle_state()
     return True, "結果を確定しました。"
 
 
@@ -1537,6 +1578,7 @@ def grader_submit():
         if success:
             auto_confirmed = True
 
+    save_battle_state()
     return jsonify({
         "success": True, 
         "message": f"{score}点を送信しました。" + (" (結果を自動確定しました)" if auto_confirmed else ""), 
@@ -1691,6 +1733,7 @@ def admin_battle_start():
     if player_b in battle_waiting_players:
         battle_waiting_players.remove(player_b)
 
+    save_battle_state()
     return jsonify({"success": True, "message": "バトルを開始しました。"})
 
 
@@ -1710,6 +1753,7 @@ def admin_battle_select_target():
     active_battle["target_player"] = target
     active_battle["scores"] = [] # Reset scores for next target
     active_battle["voted_graders"] = []
+    save_battle_state()
     return jsonify({"success": True, "message": f"審査対象をプレイヤー {target or '未選択'} に設定しました。"})
 
 
@@ -1733,7 +1777,7 @@ def admin_battle_approve_swap():
         pokes[old_idx]["choice_lock"] = None
         active_battle["a_swapped"] = True
         active_battle["a_selected_move"] = None
-        p_name = next((p.get('名前') for p in players_data if p.get('ユーザid') == active_battle["player_a"]), active_battle["player_a"])
+        p_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle["player_a"])), active_battle["player_a"])
         active_battle["messages"].append(f"{p_name}はポケモンを {pokes[active_battle['a_active_idx']]['name']} に交代した！")
     else:
         pokes = active_battle["b_pokemon"]
@@ -1744,10 +1788,11 @@ def admin_battle_approve_swap():
         pokes[old_idx]["choice_lock"] = None
         active_battle["b_swapped"] = True
         active_battle["b_selected_move"] = None
-        p_name = next((p.get('名前') for p in players_data if p.get('ユーザid') == active_battle["player_b"]), active_battle["player_b"])
+        p_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle["player_b"])), active_battle["player_b"])
         active_battle["messages"].append(f"{p_name}はポケモンを {pokes[active_battle['b_active_idx']]['name']} に交代した！")
 
     active_battle["swap_request"] = None
+    save_battle_state()
     return jsonify({"success": True, "message": "交代を承認しました。"})
 
 
@@ -1782,6 +1827,7 @@ def admin_battle_force_end():
     active_battle["voted_graders"] = []
     active_battle["last_calculated_score"] = 0
     active_battle["messages"].append("管理者によってバトルが強制終了されました。")
+    save_battle_state()
     return jsonify({"success": True, "message": "バトルを強制終了しました。"})
 
 
@@ -1791,6 +1837,7 @@ def admin_battle_reset_scores():
     active_battle["voted_graders"] = []
     active_battle["last_calculated_score"] = 0
     active_battle["messages"].append("管理者によって採点がリセットされました。")
+    save_battle_state()
     return jsonify({"success": True, "message": "採点をリセットしました。"})
 
 
@@ -1814,6 +1861,7 @@ def admin_battle_undo_confirm():
     previous_battle_state = None
     previous_players_state = None
 
+    save_battle_state()
     return jsonify({"success": True, "message": "直前の審査を取り消しました。"})
 
 
@@ -1824,7 +1872,7 @@ def swap_pokemon():
         return jsonify({"success": False, "message": "ログインしていません。"}), 401
 
     players = get_players()
-    player = next((p for p in players if p.get('ユーザid') == user_id), None)
+    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
