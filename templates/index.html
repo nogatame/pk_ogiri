@@ -212,14 +212,14 @@
                 <div id="tab-shop" class="tab-content">
                     <!-- Money bar -->
                     <div class="money-bar">
-                        <span class="money-icon">💰</span>
+                        <span class="money-icon"><img src="/static/image/money.png" class="inline-icon" alt="所持金"></span>
                         <span id="shop-money-display">0</span> 円
                     </div>
 
                     <!-- Choose screen: buy or sell -->
                     <div id="shop-choose-screen" class="shop-choose-screen">
-                        <div id="shop-buy-box" class="shop-action-box buy-box">🛍 購入</div>
-                        <div id="shop-sell-box" class="shop-action-box sell-box">💰 売却</div>
+                        <div id="shop-buy-box" class="shop-action-box buy-box"><img src="/static/image/purchase.png" class="inline-icon" alt="購入"> 購入</div>
+                        <div id="shop-sell-box" class="shop-action-box sell-box"><img src="/static/image/money.png" class="inline-icon" alt="売却"> 売却</div>
                     </div>
 
                     <!-- Buy browser -->
@@ -288,7 +288,7 @@
                     <!-- A. Mode Selection Screen -->
                     <div id="battle-mode-selection" class="battle-subview" style="display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px 20px;">
                         <button id="battle-join-queue-btn" class="btn primary-btn btn-large" style="width: 80%; max-width: 300px; padding: 15px;">⚔️ バトルする</button>
-                        <button id="battle-start-grading-btn" class="btn success-btn btn-large" style="width: 80%; max-width: 300px; padding: 15px;">📝 採点をする</button>
+                        <button id="battle-start-grading-btn" class="btn success-btn btn-large" style="width: 80%; max-width: 300px; padding: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;"><img src="/static/image/Scoring.png" class="inline-icon" alt="採点"> 採点をする</button>
                     </div>
 
                     <!-- B. Battle Waiting Queue Screen -->
@@ -379,7 +379,7 @@
 
                     <!-- D. Interactive Grader Panel -->
                     <div id="battle-grader-subview" class="battle-subview" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box; text-align: center; gap: 25px;">
-                        <h2 style="color: var(--primary);">📝 審査員の採点画面</h2>
+                        <h2 style="color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px;"><img src="/static/image/Scoring.png" class="inline-icon" alt="採点"> 審査員の採点画面</h2>
                         <p style="color: var(--text-muted);">回答者のわざを審査して、以下のボタンから1〜3の点数で評価を付けてください。</p>
                         
                         <div id="grader-button-row" style="display: flex; gap: 15px; width: 100%; max-width: 400px;">
@@ -397,7 +397,7 @@
                     <div class="bag-container">
                         <div class="bag-header">
                             <h3>💼 もちもの</h3>
-                            <span class="bag-money">💰 <span id="bag-money-display">0</span> 円</span>
+                            <span class="bag-money"><img src="/static/image/money.png" class="inline-icon" alt="所持金"> <span id="bag-money-display">0</span> 円</span>
                         </div>
                         <div class="bag-layout">
                             <div class="bag-item-list" id="bag-item-list">
@@ -560,23 +560,23 @@
             <!-- Bottom Tabs Bar (Always Visible) -->
             <nav id="tabs-bar">
                 <button class="tab-item" data-tab="strength">
-                    <span class="tab-icon">💪</span>
+                    <span class="tab-icon"><img src="/static/image/pokemon.png" alt="ポケモン"></span>
                     <span class="tab-label">ポケモン</span>
                 </button>
                 <button class="tab-item" data-tab="shop">
-                    <span class="tab-icon">🛒</span>
+                    <span class="tab-icon"><img src="/static/image/shop.png" alt="ショップ"></span>
                     <span class="tab-label">ショップ</span>
                 </button>
                 <button class="tab-item" data-tab="battle">
-                    <span class="tab-icon">⚔️</span>
+                    <span class="tab-icon"><img src="/static/image/battle.png" alt="バトル"></span>
                     <span class="tab-label">バトル</span>
                 </button>
                 <button class="tab-item" data-tab="bag">
-                    <span class="tab-icon">💼</span>
+                    <span class="tab-icon"><img src="/static/image/motimono.png" alt="もちもの"></span>
                     <span class="tab-label">もちもの</span>
                 </button>
                 <button class="tab-item active" data-tab="simulation">
-                    <span class="tab-icon">🔄</span>
+                    <span class="tab-icon"><img src="/static/image/simulation.png" alt="シミュレーション"></span>
                     <span class="tab-label">シミュレーション</span>
                 </button>
             </nav>
