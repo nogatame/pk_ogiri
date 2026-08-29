@@ -1,3 +1,18 @@
 {
-  "cleanUrls": true
+  "builds": [
+    {
+      "src": "pk_ogiri.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/templates/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "pk_ogiri.py"
+    }
+  ]
 }
