@@ -1073,9 +1073,9 @@ def battle_status():
 
     role = None
     if active_battle["active"]:
-        if active_battle["player_a"] == user_id:
+        if check_user_id(active_battle["player_a"], user_id):
             role = "A"
-        elif active_battle["player_b"] == user_id:
+        elif check_user_id(active_battle["player_b"], user_id):
             role = "B"
 
     # Is the user waiting?
@@ -1429,8 +1429,8 @@ def confirm_score_internal(forced_score=None):
                 winner_id = active_battle[f"player_{winner_role.lower()}"]
                 loser_id = active_battle[f"player_{loser_role.lower()}"]
 
-                p_winner = next((p for p in players_data if p.get('ユーザid') == winner_id), None)
-                p_loser = next((p for p in players_data if p.get('ユーザid') == loser_id), None)
+                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id)), None)
+                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
                 loser_money = p_loser.get('所持金', 0)
@@ -1468,8 +1468,8 @@ def confirm_score_internal(forced_score=None):
                 winner_id = active_battle[f"player_{winner_role.lower()}"]
                 loser_id = active_battle[f"player_{loser_role.lower()}"]
 
-                p_winner = next((p for p in players_data if p.get('ユーザid') == winner_id), None)
-                p_loser = next((p for p in players_data if p.get('ユーザid') == loser_id), None)
+                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id)), None)
+                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
                 loser_money = p_loser.get('所持金', 0)
@@ -1486,7 +1486,7 @@ def confirm_score_internal(forced_score=None):
 
                 save_players(players_data)
 
-                def_player_name = next((p.get('名前') for p in players_data if p.get('ユーザid') == active_battle[f"player_{defender_role.lower()}"]), "プレイヤー")
+                def_player_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle[f"player_{defender_role.lower()}"])), "プレイヤー")
                 active_battle["messages"].append(f"戦闘終了！ {def_player_name} の勝利！")
                 active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、両者に「ちからのもと」が2つ付与されました！")
                 active_battle["active"] = False
