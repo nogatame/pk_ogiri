@@ -573,60 +573,63 @@ def game_data():
                 "category": move.get('分類') or '物理'
             }
 
+    # Helper to build pokemon map for O(1) lookups
+    pokemon_map = {p.get('名前'): p for p in pokemon_list if p.get('名前')}
+
     # Helper to build pokemon detail object
     def get_pokemon_detail(name, p_data):
-        for p in pokemon_list:
-            if p.get('名前') == name:
-                poke_moves = []
-                custom_moves = p_data.get('わざ')
-                if not custom_moves:
-                    default_moves = []
-                    for zn in ["１", "２", "３", "４", "５"]:
-                        m_name = p.get(f'わざ{zn}')
-                        if m_name:
-                            default_moves.append(str(m_name).strip())
-                    custom_moves = default_moves[:4]
-                    while len(custom_moves) < 4:
-                        custom_moves.append("-")
-                for m_name in custom_moves:
-                    if m_name and m_name != "-":
-                        m_name_clean = str(m_name).strip()
-                        if m_name_clean in moves_map:
-                            poke_moves.append(moves_map[m_name_clean])
-                        else:
-                            poke_moves.append({
-                                "name": m_name_clean,
-                                "type": "ノーマル",
-                                "power": 50,
-                                "category": "物理"
-                            })
-                
-                custom_item = p_data.get('もちもの')
-                hp_boost = p_data.get('hp_boost', 0)
-                attack_boost = p_data.get('attack_boost', 0)
-                defense_boost = p_data.get('defense_boost', 0)
-                sp_attack_boost = p_data.get('sp_attack_boost', 0)
-                sp_defense_boost = p_data.get('sp_defense_boost', 0)
+        p = pokemon_map.get(name)
+        if p:
+            poke_moves = []
+            custom_moves = p_data.get('わざ')
+            if not custom_moves:
+                default_moves = []
+                for zn in ["１", "２", "３", "４", "５"]:
+                    m_name = p.get(f'わざ{zn}')
+                    if m_name:
+                        default_moves.append(str(m_name).strip())
+                custom_moves = default_moves[:4]
+                while len(custom_moves) < 4:
+                    custom_moves.append("-")
+            for m_name in custom_moves:
+                if m_name and m_name != "-":
+                    m_name_clean = str(m_name).strip()
+                    if m_name_clean in moves_map:
+                        poke_moves.append(moves_map[m_name_clean])
+                    else:
+                        poke_moves.append({
+                            "name": m_name_clean,
+                            "type": "ノーマル",
+                            "power": 50,
+                            "category": "物理"
+                        })
+            
+            custom_item = p_data.get('もちもの')
+            hp_boost = p_data.get('hp_boost', 0)
+            attack_boost = p_data.get('attack_boost', 0)
+            defense_boost = p_data.get('defense_boost', 0)
+            sp_attack_boost = p_data.get('sp_attack_boost', 0)
+            sp_defense_boost = p_data.get('sp_defense_boost', 0)
 
-                return {
-                    "name": p.get('名前'),
-                    "番号": p.get('番号'),
-                    "type1": p.get('タイプ１'),
-                    "type2": p.get('タイプ2'),
-                    "hp": (p.get('HP（H）') or 0) + hp_boost,
-                    "attack": (p.get('攻撃（A）') or 0) + attack_boost,
-                    "defense": (p.get('防御（B）') or 0) + defense_boost,
-                    "sp_attack": (p.get('特攻（C）') or 0) + sp_attack_boost,
-                    "sp_defense": (p.get('特防（D）') or 0) + sp_defense_boost,
-                    "hp_boost": hp_boost,
-                    "attack_boost": attack_boost,
-                    "defense_boost": defense_boost,
-                    "sp_attack_boost": sp_attack_boost,
-                    "sp_defense_boost": sp_defense_boost,
-                    "level": p_data.get('レベル') or p.get('レベル') or 50,
-                    "moves": poke_moves,
-                    "item": custom_item
-                }
+            return {
+                "name": p.get('名前'),
+                "番号": p.get('番号'),
+                "type1": p.get('タイプ１'),
+                "type2": p.get('タイプ2'),
+                "hp": (p.get('HP（H）') or 0) + hp_boost,
+                "attack": (p.get('攻撃（A）') or 0) + attack_boost,
+                "defense": (p.get('防御（B）') or 0) + defense_boost,
+                "sp_attack": (p.get('特攻（C）') or 0) + sp_attack_boost,
+                "sp_defense": (p.get('特防（D）') or 0) + sp_defense_boost,
+                "hp_boost": hp_boost,
+                "attack_boost": attack_boost,
+                "defense_boost": defense_boost,
+                "sp_attack_boost": sp_attack_boost,
+                "sp_defense_boost": sp_defense_boost,
+                "level": p_data.get('レベル') or p.get('レベル') or 50,
+                "moves": poke_moves,
+                "item": custom_item
+            }
         return None
 
     my_pokemon = []

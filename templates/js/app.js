@@ -2117,6 +2117,7 @@ function showStrengthDetail(poke) {
 // ============================================================
 let battlePollingInterval = null;
 let currentBattleRole = null;
+let triggerBattlePoll = null;
 
 function showBattleSubview(subviewId) {
     const subviews = [
@@ -2170,11 +2171,14 @@ async function startBattlePolling() {
         }
     }
 
+    triggerBattlePoll = poll;
+
     await poll();
     battlePollingInterval = setInterval(poll, 1500);
 }
 
 function updateBattlePlayerArena(data) {
+    state.lastBattleStatus = data;
     const myPoke = data.my_pokemon[data.my_active_idx];
     const oppPoke = data.opp_pokemon[data.opp_active_idx];
 
@@ -2325,12 +2329,16 @@ document.querySelectorAll('.grader-point-btn').forEach(btn => {
 for (let i = 0; i < 4; i++) {
     document.getElementById(`p-move-${i}`).addEventListener('click', async () => {
         if (!state.myPokemonChoices || state.myPokemonChoices.length === 0) return;
+        if (!state.lastBattleStatus) return;
 
-        // Find selected move
+        // Disable buttons immediately for instant feedback
+        for (let j = 0; j < 4; j++) {
+            document.getElementById(`p-move-${j}`).disabled = true;
+        }
+        document.getElementById('p-swap-btn').disabled = true;
+
         try {
-            const statusRes = await fetch('/api/battle/status');
-            const statusData = await statusRes.json();
-            const myPoke = statusData.my_pokemon[statusData.my_active_idx];
+            const myPoke = state.lastBattleStatus.my_pokemon[state.lastBattleStatus.my_active_idx];
             const m = myPoke.moves[i];
 
             const res = await fetch('/api/battle/select_move', {
@@ -2344,11 +2352,14 @@ for (let i = 0; i < 4; i++) {
             });
             const data = await res.json();
             if (data.success) {
-                // UI updates automatically on next poll
+                if (triggerBattlePoll) await triggerBattlePoll();
             } else {
                 alert(data.message);
+                if (triggerBattlePoll) await triggerBattlePoll();
             }
-        } catch (e) { }
+        } catch (e) {
+            if (triggerBattlePoll) await triggerBattlePoll();
+        }
     });
 }
 
@@ -2358,7 +2369,7 @@ document.getElementById('p-back-btn').addEventListener('click', async () => {
         const res = await fetch('/api/battle/cancel_move', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
-            // UI updates automatically on next poll
+            if (triggerBattlePoll) await triggerBattlePoll();
         }
     } catch (e) { }
 });
@@ -2369,6 +2380,9 @@ document.getElementById('p-swap-btn').addEventListener('click', async () => {
         const res = await fetch('/api/battle/request_swap', { method: 'POST' });
         const data = await res.json();
         alert(data.message);
+        if (data.success) {
+            if (triggerBattlePoll) await triggerBattlePoll();
+        }
     } catch (e) { }
 });
 
