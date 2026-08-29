@@ -526,7 +526,7 @@ def get_status():
     wish1 = player.get('希望1')
 
     if pokemon1 and pokemon2:
-        status = "ready"
+        status = "active"
     elif wish1:
         status = "waiting"
     else:

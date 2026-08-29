@@ -384,7 +384,7 @@ function startPolling() {
             const data = await res.json();
             
             if (res.ok && data.success) {
-                if (data.status === 'ready') {
+                if (data.status === 'active') {
                     // Stopping polling
                     clearInterval(state.pollingInterval);
                     state.pollingInterval = null;

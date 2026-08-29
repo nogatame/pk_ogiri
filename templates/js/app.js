@@ -2,7 +2,7 @@
 let TYPE_CHART = {};
 
 // ngrok URL (Change this to your current ngrok URL!)
-const API_BASE_URL = "https://nice-cameras-stare.loca.lt/";
+const API_BASE_URL = "https://two-beers-speak.loca.lt";
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
@@ -392,7 +392,7 @@ function startPolling() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                if (data.status === 'ready') {
+                if (data.status === 'active') {
                     // Stopping polling
                     clearInterval(state.pollingInterval);
                     state.pollingInterval = null;
