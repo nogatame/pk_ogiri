@@ -56,9 +56,12 @@ def load_battle_state():
     try:
         with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        battle_waiting_players = set(data.get("waiting_players", []))
-        grading_viewers = set(data.get("grading_viewers", []))
-        active_battle = data.get("active_battle", {})
+        battle_waiting_players.clear()
+        battle_waiting_players.update(data.get("waiting_players", []))
+        grading_viewers.clear()
+        grading_viewers.update(data.get("grading_viewers", []))
+        active_battle.clear()
+        active_battle.update(data.get("active_battle", {}))
     except Exception as e:
         print(f"Error loading battle state: {e}")
 

@@ -419,8 +419,13 @@
                     <div style="margin-top: 8px; display: flex; gap: 15px;">
                         <label><input type="radio" name="grading-target" value="A"> プレイヤーAの審査</label>
                         <label><input type="radio" name="grading-target" value="B"> プレイヤーBの審査</label>
-                        <label><input type="radio" name="grading-target" value="None" checked> プレイヤーを選択しない（観戦者に点数のみ表示）</label>
+                        <label><input type="radio" name="grading-target" value="None" checked> 未選択</label>
                     </div>
+                </div>
+
+                <!-- Warning Message for Unselected Target -->
+                <div id="target-warning-message" style="display: none; background: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; text-align: center;">
+                    ⚠️ 採点が6人分揃っていますが、審査対象が「未選択」になっています。プレイヤーAまたはBを選択してください。
                 </div>
 
                 <!-- Scoring status -->
@@ -564,6 +569,14 @@
                         const targetRadio = document.querySelector(`input[name="grading-target"][value="${currentTarget}"]`);
                         if (targetRadio) {
                             targetRadio.checked = true;
+                        }
+
+                        // Check if 6 scores are collected and target is None (未選択)
+                        const warningMsg = document.getElementById('target-warning-message');
+                        if (b.scores.length >= 6 && (!b.target_player || b.target_player === 'None')) {
+                            warningMsg.style.display = 'block';
+                        } else {
+                            warningMsg.style.display = 'none';
                         }
 
                         const hasMoveA = !!b.a_selected_move;
