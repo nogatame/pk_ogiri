@@ -466,48 +466,65 @@
                     const selectA = document.getElementById('select-player-a');
                     const selectB = document.getElementById('select-player-b');
                     
-                    const prevValA = selectA.value;
-                    const prevValB = selectB.value;
+                    const currentWaitingIds = Array.from(selectA.options)
+                        .map(opt => opt.value)
+                        .filter(val => val !== "");
+                    const newWaitingIds = data.waiting.map(p => String(p.user_id));
+                    const waitingSame = currentWaitingIds.length === newWaitingIds.length &&
+                        currentWaitingIds.every((val, index) => val === newWaitingIds[index]);
 
-                    // Options refresh
-                    selectA.innerHTML = '<option value="">プレイヤーAを選択</option>';
-                    selectB.innerHTML = '<option value="">プレイヤーBを選択</option>';
+                    if (!waitingSame) {
+                        const prevValA = selectA.value;
+                        const prevValB = selectB.value;
 
-                    if (data.waiting.length === 0) {
-                        waitingList.innerHTML = '<li>待機中のプレイヤーはいません。</li>';
-                    } else {
-                        waitingList.innerHTML = '';
-                        data.waiting.forEach(p => {
-                            const li = document.createElement('li');
-                            li.textContent = `${p.name} (${p.user_id})`;
-                            waitingList.appendChild(li);
+                        selectA.innerHTML = '<option value="">プレイヤーAを選択</option>';
+                        selectB.innerHTML = '<option value="">プレイヤーBを選択</option>';
 
-                            const optA = document.createElement('option');
-                            optA.value = p.user_id;
-                            optA.textContent = p.name;
-                            selectA.appendChild(optA);
+                        if (data.waiting.length === 0) {
+                            waitingList.innerHTML = '<li>待機中のプレイヤーはいません。</li>';
+                        } else {
+                            waitingList.innerHTML = '';
+                            data.waiting.forEach(p => {
+                                const li = document.createElement('li');
+                                li.textContent = `${p.name} (${p.user_id})`;
+                                waitingList.appendChild(li);
 
-                            const optB = document.createElement('option');
-                            optB.value = p.user_id;
-                            optB.textContent = p.name;
-                            selectB.appendChild(optB);
-                        });
+                                const optA = document.createElement('option');
+                                optA.value = p.user_id;
+                                optA.textContent = p.name;
+                                selectA.appendChild(optA);
 
-                        selectA.value = prevValA;
-                        selectB.value = prevValB;
+                                const optB = document.createElement('option');
+                                optB.value = p.user_id;
+                                optB.textContent = p.name;
+                                selectB.appendChild(optB);
+                            });
+
+                            selectA.value = prevValA;
+                            selectB.value = prevValB;
+                        }
                     }
 
                     // Update graders view
                     const gradersList = document.getElementById('grading-viewers-list');
-                    if (data.graders.length === 0) {
-                        gradersList.innerHTML = '<li>誰も見ていません。</li>';
-                    } else {
-                        gradersList.innerHTML = '';
-                        data.graders.forEach(name => {
-                            const li = document.createElement('li');
-                            li.textContent = name;
-                            gradersList.appendChild(li);
-                        });
+                    const currentGraderNames = Array.from(gradersList.children)
+                        .map(li => li.textContent)
+                        .filter(txt => txt !== "誰も見ていません。");
+                    const newGraderNames = data.graders;
+                    const gradersSame = currentGraderNames.length === newGraderNames.length &&
+                        currentGraderNames.every((val, index) => val === newGraderNames[index]);
+
+                    if (!gradersSame) {
+                        if (data.graders.length === 0) {
+                            gradersList.innerHTML = '<li>誰も見ていません。</li>';
+                        } else {
+                            gradersList.innerHTML = '';
+                            data.graders.forEach(name => {
+                                const li = document.createElement('li');
+                                li.textContent = name;
+                                gradersList.appendChild(li);
+                            });
+                        }
                     }
 
                     // Active Battle details
