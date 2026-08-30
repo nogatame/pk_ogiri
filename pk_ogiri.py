@@ -575,7 +575,7 @@ def submit_choices():
 
     found = False
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             for i, choice in enumerate(choices):
                 p[f'希望{i+1}'] = choice
             found = True
@@ -598,7 +598,7 @@ def get_status():
 
     player = None
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             player = p
             break
 
@@ -636,7 +636,7 @@ def game_data():
 
     player = None
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             player = p
             break
 
@@ -750,7 +750,7 @@ def get_items_list():
         return jsonify({"success": False, "message": "ログインしていません。"}), 401
     items = get_items()
     players = get_players()
-    player = next((p for p in players if p.get('ユーザid') == user_id), None)
+    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
     owned_raw = player.get('もちもの') or ''
@@ -782,7 +782,7 @@ def buy_item():
     price = item.get('値段', 0)
 
     players = get_players()
-    player = next((p for p in players if p.get('ユーザid') == user_id), None)
+    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
@@ -830,7 +830,7 @@ def sell_item():
         sell_price = item.get('値段', 0) // 2
 
     players = get_players()
-    player = next((p for p in players if p.get('ユーザid') == user_id), None)
+    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
@@ -871,7 +871,7 @@ def use_power_source():
         return jsonify({"success": False, "message": "不正なステータスタイプです。"}), 400
 
     players = get_players()
-    player = next((p for p in players if p.get('ユーザid') == user_id), None)
+    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
@@ -953,7 +953,7 @@ def admin_approve():
 
     found = False
     for p in players:
-        if p.get('ユーザid') == user_id:
+        if check_user_id(p.get('ユーザid'), user_id):
             p['ポケモン'] = []
             for poke_name in [pokemon1, pokemon2]:
                 default_moves = []
@@ -999,7 +999,7 @@ def equip_item():
         item_name = data.get('item_name') # string or None (unequip)
 
         players = get_players()
-        player = next((p for p in players if p.get('ユーザid') == user_id), None)
+        player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
         if not player:
             return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
@@ -1051,7 +1051,7 @@ def use_tm():
         move_index = data.get('move_index') # 0-3
 
         players = get_players()
-        player = next((p for p in players if p.get('ユーザid') == user_id), None)
+        player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
         if not player:
             return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
