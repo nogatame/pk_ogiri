@@ -53,31 +53,39 @@ def load_battle_state():
     if not os.path.exists(BATTLE_STATE_JSON_PATH):
         save_battle_state()
         return
-    try:
-        with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        battle_waiting_players.clear()
-        battle_waiting_players.update(data.get("waiting_players", []))
-        grading_viewers.clear()
-        grading_viewers.update(data.get("grading_viewers", []))
-        active_battle.clear()
-        active_battle.update(data.get("active_battle", {}))
-    except Exception as e:
-        print(f"Error loading battle state: {e}")
+    import time
+    for _ in range(5):
+        try:
+            with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            battle_waiting_players.clear()
+            battle_waiting_players.update(data.get("waiting_players", []))
+            grading_viewers.clear()
+            grading_viewers.update(data.get("grading_viewers", []))
+            active_battle.clear()
+            active_battle.update(data.get("active_battle", {}))
+            return
+        except Exception as e:
+            time.sleep(0.01)
+    print("Failed to load battle state after retries.")
 
 def save_battle_state():
-    try:
-        data = {
-            "waiting_players": list(battle_waiting_players),
-            "grading_viewers": list(grading_viewers),
-            "active_battle": active_battle
-        }
-        temp_path = BATTLE_STATE_JSON_PATH + '.tmp'
-        with open(temp_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-        os.replace(temp_path, BATTLE_STATE_JSON_PATH)
-    except Exception as e:
-        print(f"Error saving battle state: {e}")
+    import time
+    data = {
+        "waiting_players": list(battle_waiting_players),
+        "grading_viewers": list(grading_viewers),
+        "active_battle": active_battle
+    }
+    temp_path = BATTLE_STATE_JSON_PATH + '.tmp'
+    for _ in range(5):
+        try:
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            os.replace(temp_path, BATTLE_STATE_JSON_PATH)
+            return
+        except Exception as e:
+            time.sleep(0.01)
+    print("Failed to save battle state after retries.")
 
 @app.before_request
 def before_request():
