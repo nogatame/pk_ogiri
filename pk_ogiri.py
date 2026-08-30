@@ -1299,9 +1299,12 @@ def confirm_score_internal(forced_score=None):
     else:
         score = calculate_score(active_battle["scores"])
 
-    target = active_battle["target_player"]
-    if not target:
-        # Grader only mode
+    target = active_battle.get("target_player")
+    if not target or target == "None":
+        return False, "審査対象が選択されていません。"
+
+    if target == "Other":
+        # Grader only / Other Player mode
         active_battle["last_confirmed_score"] = score
         active_battle["last_calculated_score"] = score
         active_battle["messages"].append(f"採点結果: {score}点！")
