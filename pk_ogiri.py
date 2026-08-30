@@ -67,7 +67,7 @@ def load_battle_state():
             return
         except Exception as e:
             time.sleep(0.01)
-    print("Failed to load battle state after retries.")
+    raise RuntimeError("Failed to load battle state after retries.")
 
 def save_battle_state():
     import time
