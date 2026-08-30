@@ -1654,4 +1654,24 @@ body {
     padding: 8px 12px;
 }
 
+/* スマホ（横画面）または画面の高さが低い時の横並び調整 */
+@media (max-height: 600px) or (orientation: landscape) {
+    #player-arena-layout {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    #battle-player-arena-subview .poke-battle-card {
+        width: calc(50% - 4px) !important;
+    }
+
+    /* 技選択ボックスの親要素を全幅にする */
+    #player-arena-layout > div:last-child {
+        width: 100% !important;
+        margin-top: 0 !important;
+    }
+}
+
+
 

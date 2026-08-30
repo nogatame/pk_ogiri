@@ -46,46 +46,80 @@ active_battle = {
     "last_calculated_score": 0
 }
 
-BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
+import sqlite3
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.db')
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY, data TEXT)')
+    cursor.execute('SELECT COUNT(*) FROM state')
+    if cursor.fetchone()[0] == 0:
+        default_data = {
+            "waiting_players": [],
+            "grading_viewers": [],
+            "active_battle": {
+                "active": False,
+                "player_a": None,
+                "player_b": None,
+                "a_pokemon": [],
+                "b_pokemon": [],
+                "a_active_idx": 0,
+                "b_active_idx": 0,
+                "a_selected_move": None,
+                "b_selected_move": None,
+                "a_swapped": False,
+                "b_swapped": False,
+                "swap_request": None,
+                "target_player": None,
+                "scores": [],
+                "voted_graders": [],
+                "messages": [],
+                "last_confirmed_score": None,
+                "last_calculated_score": 0
+            }
+        }
+        cursor.execute('INSERT INTO state (id, data) VALUES (1, ?)', (json.dumps(default_data),))
+        conn.commit()
+    conn.close()
+
+init_db()
 
 def load_battle_state():
     global battle_waiting_players, grading_viewers, active_battle
-    if not os.path.exists(BATTLE_STATE_JSON_PATH):
-        save_battle_state()
-        return
-    import time
-    for _ in range(5):
-        try:
-            with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        cursor.execute('SELECT data FROM state WHERE id = 1')
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            data = json.loads(row[0])
             battle_waiting_players.clear()
             battle_waiting_players.update(data.get("waiting_players", []))
             grading_viewers.clear()
             grading_viewers.update(data.get("grading_viewers", []))
             active_battle.clear()
             active_battle.update(data.get("active_battle", {}))
-            return
-        except Exception as e:
-            time.sleep(0.01)
-    raise RuntimeError("Failed to load battle state after retries.")
+    except Exception as e:
+        print(f"Error loading battle state from DB: {e}")
+        raise RuntimeError(f"Failed to load battle state from DB: {e}")
 
 def save_battle_state():
-    import time
-    data = {
-        "waiting_players": list(battle_waiting_players),
-        "grading_viewers": list(grading_viewers),
-        "active_battle": active_battle
-    }
-    temp_path = BATTLE_STATE_JSON_PATH + '.tmp'
-    for _ in range(5):
-        try:
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-            os.replace(temp_path, BATTLE_STATE_JSON_PATH)
-            return
-        except Exception as e:
-            time.sleep(0.01)
-    print("Failed to save battle state after retries.")
+    try:
+        data = {
+            "waiting_players": list(battle_waiting_players),
+            "grading_viewers": list(grading_viewers),
+            "active_battle": active_battle
+        }
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        cursor = conn.cursor()
+        cursor.execute('UPDATE state SET data = ? WHERE id = 1', (json.dumps(data, ensure_ascii=False),))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error saving battle state to DB: {e}")
+        raise RuntimeError(f"Failed to save battle state to DB: {e}")
 
 @app.before_request
 def before_request():
