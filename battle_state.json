@@ -1,0 +1,214 @@
+{
+    "waiting_players": [
+        "test1"
+    ],
+    "grading_viewers": [],
+    "active_battle": {
+        "active": false,
+        "player_a": "china",
+        "player_b": "test1",
+        "a_pokemon": [
+            {
+                "name": "シャワーズ",
+                "番号": 28,
+                "type1": "みず",
+                "type2": null,
+                "max_hp": 130,
+                "hp": 0,
+                "attack": 65,
+                "defense": 60,
+                "sp_attack": 110,
+                "sp_defense": 95,
+                "moves": [
+                    {
+                        "name": "ハイドロカノン",
+                        "type": "みず",
+                        "power": 81,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "なみのり",
+                        "type": "みず",
+                        "power": 36,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "こごえるかぜ",
+                        "type": "こおり",
+                        "power": 16,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "みずのはどう",
+                        "type": "みず",
+                        "power": 16,
+                        "category": "特殊"
+                    }
+                ],
+                "item": "しんぴのしずく",
+                "level": 50,
+                "choice_lock": null
+            },
+            {
+                "name": "デンリュウ",
+                "番号": 33,
+                "type1": "でんき",
+                "type2": null,
+                "max_hp": 90,
+                "hp": 0,
+                "attack": 75,
+                "defense": 85,
+                "sp_attack": 115,
+                "sp_defense": 90,
+                "moves": [
+                    {
+                        "name": "かみなり",
+                        "type": "でんき",
+                        "power": 54,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "10まんボルト",
+                        "type": "でんき",
+                        "power": 36,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "エナジーボール",
+                        "type": "くさ",
+                        "power": 36,
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "でんきショック",
+                        "type": "でんき",
+                        "power": 16,
+                        "category": "特殊"
+                    }
+                ],
+                "item": null,
+                "level": 50,
+                "choice_lock": null
+            }
+        ],
+        "b_pokemon": [
+            {
+                "name": "キノガッサ",
+                "番号": 18,
+                "type1": "くさ",
+                "type2": "かくとう",
+                "max_hp": 60,
+                "hp": 60,
+                "attack": 130,
+                "defense": 80,
+                "sp_attack": 60,
+                "sp_defense": 60,
+                "moves": [
+                    {
+                        "name": "リーフブレード",
+                        "type": "くさ",
+                        "power": 54,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "インファイト",
+                        "type": "かくとう",
+                        "power": 54,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "いわなだれ",
+                        "type": "いわ",
+                        "power": 36,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "はっぱカッター",
+                        "type": "くさ",
+                        "power": 16,
+                        "category": "物理"
+                    }
+                ],
+                "item": "リリバのみ",
+                "level": 50,
+                "choice_lock": null
+            },
+            {
+                "name": "カバルドン",
+                "番号": 16,
+                "type1": "じめん",
+                "type2": null,
+                "max_hp": 108,
+                "hp": 108,
+                "attack": 112,
+                "defense": 118,
+                "sp_attack": 68,
+                "sp_defense": 72,
+                "moves": [
+                    {
+                        "name": "じわれ",
+                        "type": "じめん",
+                        "power": 100,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "じしん",
+                        "type": "じめん",
+                        "power": 54,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "いわなだれ",
+                        "type": "いわ",
+                        "power": 36,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "じだんだ",
+                        "type": "じめん",
+                        "power": 16,
+                        "category": "物理"
+                    }
+                ],
+                "item": null,
+                "level": 50,
+                "choice_lock": null
+            }
+        ],
+        "a_active_idx": 1,
+        "b_active_idx": 0,
+        "a_selected_move": null,
+        "b_selected_move": null,
+        "a_swapped": false,
+        "b_swapped": false,
+        "swap_request": null,
+        "target_player": null,
+        "scores": [],
+        "voted_graders": [],
+        "messages": [
+            "バトル開始！ 高木 VS あ",
+            "あの キノガッサの リーフブレード！",
+            "わざ成功！シャワーズに 127 ダメージ！",
+            "こうかは　ばつぐんだ！",
+            "あの キノガッサの はっぱカッター！",
+            "しかし　わざは　しっぱいした！",
+            "あの キノガッサの インファイト！",
+            "わざ成功！シャワーズに 63 ダメージ！",
+            "シャワーズはたおれた！",
+            "2体目の デンリュウ がくりだされた！",
+            "あの キノガッサの リーフブレード！",
+            "わざ成功！デンリュウに 45 ダメージ！",
+            "もちもの”オボンのみ”が発動！自身のHPが半分を下回ったとき、自身の最大HPの3分の1を回復する。",
+            "デンリュウのHPが 30 回復した！",
+            "あの キノガッサの リーフブレード！",
+            "わざ成功！デンリュウに 45 ダメージ！",
+            "あの キノガッサの リーフブレード！",
+            "わざ成功！デンリュウに 45 ダメージ！",
+            "デンリュウはたおれた！",
+            "戦闘終了！ あ の勝利！",
+            "勝者は敗者の所持金の半分（10000円）を獲得し、両者に「ちからのもと」が2つ付与されました！"
+        ],
+        "last_confirmed_score": null,
+        "last_calculated_score": 100
+    }
+}

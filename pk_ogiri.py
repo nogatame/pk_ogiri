@@ -3,6 +3,7 @@ import json
 import re
 from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
+import requests
 import openpyxl
 
 app = Flask(__name__, template_folder='templates', static_folder='public/static', static_url_path='/static')
@@ -51,6 +52,30 @@ BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__))
 
 def load_battle_state():
     global battle_waiting_players, grading_viewers, active_battle
+    
+    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
+    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            res = requests.post(url, headers=headers, json=["GET", "battle_state"])
+            if res.status_code == 200:
+                result = res.json().get('result')
+                if result:
+                    data = json.loads(result)
+                    battle_waiting_players.clear()
+                    battle_waiting_players.update(data.get("waiting_players", []))
+                    grading_viewers.clear()
+                    grading_viewers.update(data.get("grading_viewers", []))
+                    active_battle.clear()
+                    active_battle.update(data.get("active_battle", {}))
+                    return
+        except Exception as e:
+            print(f"Failed to load from Vercel KV: {e}")
+            
+    # 2. Fallback to local JSON file (for local development)
     if not os.path.exists(BATTLE_STATE_JSON_PATH):
         try:
             save_battle_state()
@@ -71,10 +96,28 @@ def load_battle_state():
             return
         except Exception as e:
             time.sleep(0.01)
-    # If it fails on Vercel/Read-only filesystem, print warning and continue with memory-based state
     print("Warning: Failed to load battle state from file (Vercel / read-only filesystem fallback to memory).")
 
 def save_battle_state():
+    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
+    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            data = {
+                "waiting_players": list(battle_waiting_players),
+                "grading_viewers": list(grading_viewers),
+                "active_battle": active_battle
+            }
+            res = requests.post(url, headers=headers, json=["SET", "battle_state", json.dumps(data, ensure_ascii=False)])
+            if res.status_code == 200:
+                return
+        except Exception as e:
+            print(f"Failed to save to Vercel KV: {e}")
+
+    # 2. Fallback to local JSON file (for local development)
     import time
     data = {
         "waiting_players": list(battle_waiting_players),
