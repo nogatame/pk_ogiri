@@ -2194,7 +2194,9 @@ function updateBattlePlayerArena(data) {
     document.getElementById('p-my-name').textContent = myPoke.name;
     document.getElementById('p-my-level').textContent = `Lv.${myPoke.level || 50}`;
     const myHpPct = (myPoke.hp / myPoke.max_hp) * 100;
-    document.getElementById('p-my-hp-fill').style.width = `${myHpPct}%`;
+    const myHpFill = document.getElementById('p-my-hp-fill');
+    myHpFill.style.width = `${myHpPct}%`;
+    setHpBarColor(myHpFill, myHpPct);
     document.getElementById('p-my-hp-val').textContent = `${myPoke.hp}/${myPoke.max_hp}`;
     document.getElementById('p-my-types').textContent = [myPoke.type1, myPoke.type2].filter(t => t).join('/');
     setPokemonSprite(document.getElementById('p-my-sprite'), myPoke.番号, myPoke.name);
@@ -2204,7 +2206,9 @@ function updateBattlePlayerArena(data) {
     document.getElementById('p-opp-name').textContent = oppPoke.name;
     document.getElementById('p-opp-level').textContent = `Lv.${oppPoke.level || 50}`;
     const oppHpPct = (oppPoke.hp / oppPoke.max_hp) * 100;
-    document.getElementById('p-opp-hp-fill').style.width = `${oppHpPct}%`;
+    const oppHpFill = document.getElementById('p-opp-hp-fill');
+    oppHpFill.style.width = `${oppHpPct}%`;
+    setHpBarColor(oppHpFill, oppHpPct);
     document.getElementById('p-opp-hp-val').textContent = `${oppPoke.hp}/${oppPoke.max_hp}`;
     document.getElementById('p-opp-types').textContent = [oppPoke.type1, oppPoke.type2].filter(t => t).join('/');
     setPokemonSprite(document.getElementById('p-opp-sprite'), oppPoke.番号, oppPoke.name);

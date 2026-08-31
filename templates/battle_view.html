@@ -15,12 +15,12 @@
         }
 
         :root {
-            --bg-color: #050e08;
-            --card-bg: rgba(12, 31, 20, 0.75);
-            --border-color: #1c3e29;
+            --bg-color: #040d07;
+            --card-bg: rgba(10, 24, 15, 0.75);
+            --border-color: #22c55e;
             --primary: #22c55e;
             --danger: #ef4444;
-            --success: #10b981;
+            --success: #22c55e;
             --text-color: #f9fafb;
         }
 
@@ -50,9 +50,9 @@
             margin-bottom: 20px;
         }
 
-        /* Frameless Side Columns for Pokemons */
+        /* Frameless Side Columns for Pokemons - Made wider to fit larger sprite */
         .side-column {
-            width: 300px;
+            width: 480px;
             flex-shrink: 0;
             background: transparent;
             border: none;
@@ -70,7 +70,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            max-width: 700px; /* Make center slide smaller */
+            max-width: 500px; /* Make center slide smaller so side columns can be larger */
             margin: 0 auto;
         }
 
@@ -78,7 +78,7 @@
             width: 100%;
             aspect-ratio: 16/9;
             background: #000;
-            border: 4px solid #1e293b;
+            border: 4px solid var(--border-color);
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -202,14 +202,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 300px;
+            height: 460px;
         }
 
         /* Sprite positioning styles */
         .pokemon-sprite-large {
             display: inline-block;
-            width: 250px;
-            height: calc(250px * 3220 / 3200); /* preserved aspect ratio */
+            width: 450px; /* Enlarge 1.8x from 250px */
+            height: calc(450px * 3220 / 3200); /* preserved aspect ratio */
             background-image: url('/static/スプライトシート.png');
             background-repeat: no-repeat;
             background-size: 1000% 1000%;
@@ -218,16 +218,16 @@
             transition: filter 0.3s ease, transform 0.3s ease;
         }
 
-        #poke-b-sprite-inner {
-            transform: scaleX(-1); /* Face left */
+        #poke-a-sprite-inner {
+            transform: scaleX(-1); /* Face right */
         }
 
         /* Neon glow on active target sprite */
         .active-target #poke-a-sprite-inner {
+            transform: scaleX(-1);
             filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45));
         }
         .active-target #poke-b-sprite-inner {
-            transform: scaleX(-1);
             filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45));
         }
 
@@ -255,8 +255,12 @@
             gap: 8px;
         }
 
+        button, input, select, textarea {
+            font-family: inherit;
+        }
+
         .battle-log {
-            font-family: monospace;
+            font-family: inherit;
             font-size: 1.15rem;
             line-height: 1.6;
             height: 90px;
@@ -512,9 +516,9 @@
                             if (hpFillA <= 20) {
                                 hpBarA.style.backgroundColor = '#ef4444'; // Red
                             } else if (hpFillA <= 50) {
-                                hpBarA.style.backgroundColor = '#f59e0b'; // Orange
+                                hpBarA.style.backgroundColor = '#f59e0b'; // Yellow
                             } else {
-                                hpBarA.style.backgroundColor = '#10b981'; // Green
+                                hpBarA.style.backgroundColor = '#22c55e'; // Bright Green
                             }
                             
                             document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
@@ -540,7 +544,7 @@
                             } else if (hpFillB <= 50) {
                                 hpBarB.style.backgroundColor = '#f59e0b';
                             } else {
-                                hpBarB.style.backgroundColor = '#10b981';
+                                hpBarB.style.backgroundColor = '#22c55e';
                             }
                             
                             document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;

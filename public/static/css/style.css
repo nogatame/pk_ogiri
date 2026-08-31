@@ -6,16 +6,16 @@
 
 /* Base styling & Design Tokens */
 :root {
-    --bg-color: #061009;
-    --card-bg: rgba(14, 29, 19, 0.95);
-    --card-border: #1a3f28;
+    --bg-color: #040d07;
+    --card-bg: rgba(10, 24, 15, 0.95);
+    --card-border: #22c55e;
     --text-primary: #f8fafc;
-    --text-secondary: #a3b8a8;
+    --text-secondary: #c0dec8;
     --primary: #22c55e;
     --primary-hover: #16a34a;
-    --primary-glow: rgba(34, 197, 94, 0.35);
-    --success: #10b981;
-    --success-hover: #059669;
+    --primary-glow: rgba(34, 197, 94, 0.55);
+    --success: #22c55e;
+    --success-hover: #16a34a;
     --error: #ef4444;
     --warning: #f59e0b;
     --border-radius: 12px;
@@ -29,6 +29,10 @@
     padding: 0;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
 }
 
 body {
