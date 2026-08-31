@@ -1,20 +1,26 @@
+@font-face {
+    font-family: 'x12y16pxMaruMonica';
+    src: url('/static/x12y16pxMaruMonica.ttf') format('truetype');
+    font-display: swap;
+}
+
 /* Base styling & Design Tokens */
 :root {
-    --bg-color: #0b0f19;
-    --card-bg: rgba(23, 32, 51, 0.95);
-    --card-border: #273554;
+    --bg-color: #061009;
+    --card-bg: rgba(14, 29, 19, 0.95);
+    --card-border: #1a3f28;
     --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
-    --primary-glow: rgba(59, 130, 246, 0.35);
+    --text-secondary: #a3b8a8;
+    --primary: #22c55e;
+    --primary-hover: #16a34a;
+    --primary-glow: rgba(34, 197, 94, 0.35);
     --success: #10b981;
     --success-hover: #059669;
     --error: #ef4444;
     --warning: #f59e0b;
     --border-radius: 12px;
-    --font-game: 'M PLUS 2', sans-serif;
-    --font-retro: 'Press Start 2P', monospace;
+    --font-game: 'x12y16pxMaruMonica', 'M PLUS 2', sans-serif;
+    --font-retro: 'x12y16pxMaruMonica', 'Press Start 2P', monospace;
 }
 
 * {
@@ -35,6 +41,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: none;
+    font-smooth: never;
 }
 
 /* App container constrained to viewport in landscape */
@@ -344,9 +353,9 @@ body {
 }
 
 @keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
 /* 5. MAIN TABBED SCREEN Layout */
@@ -822,8 +831,8 @@ body {
 }
 
 .tab-icon img {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     object-fit: contain;
 }
 
@@ -846,7 +855,7 @@ body {
 
 .tab-item.active {
     color: var(--primary);
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(34, 197, 94, 0.05);
 }
 
 .tab-item.active .tab-icon {
@@ -949,7 +958,7 @@ body {
 .shop-action-box:hover:not(.disabled-box) {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px var(--primary-glow);
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(34, 197, 94, 0.1);
 }
 .shop-action-box.buy-box { color: #38bdf8; border-color: #38bdf8; }
 .shop-action-box.sell-box { color: #a3e635; border-color: #a3e635; }
@@ -1055,7 +1064,7 @@ body {
 .shop-sub-tab.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(34, 197, 94, 0.05);
 }
 
 .shop-item-row {
@@ -1068,12 +1077,12 @@ body {
     color: var(--text-primary);
 }
 .shop-item-row:hover {
-    background: rgba(59, 130, 246, 0.12);
+    background: rgba(34, 197, 94, 0.12);
 }
 .shop-item-row.selected {
-    background: rgba(59, 130, 246, 0.22);
+    background: rgba(34, 197, 94, 0.22);
     border-left: 3px solid var(--primary);
-    color: #93c5fd;
+    color: #86efac;
 }
 
 /* Right panel: item detail */
@@ -1112,12 +1121,12 @@ body {
 }
 .shop-detail-category {
     display: inline-block;
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(34, 197, 94, 0.2);
     border: 1px solid var(--primary);
     border-radius: 4px;
     padding: 2px 8px;
     font-size: 0.7rem;
-    color: #93c5fd;
+    color: #86efac;
     margin-top: 2px;
 }
 .shop-detail-effect {
@@ -1260,11 +1269,11 @@ body {
     transition: background 0.15s;
     color: var(--text-primary);
 }
-.bag-item-row:hover { background: rgba(59, 130, 246, 0.1); }
+.bag-item-row:hover { background: rgba(34, 197, 94, 0.1); }
 .bag-item-row.selected {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(34, 197, 94, 0.2);
     border-left: 3px solid var(--primary);
-    color: #93c5fd;
+    color: #86efac;
 }
 .bag-empty-msg {
     flex: 1;

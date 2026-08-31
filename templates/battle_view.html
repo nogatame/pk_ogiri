@@ -8,11 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'x12y16pxMaruMonica';
+            src: url('/static/x12y16pxMaruMonica.ttf') format('truetype');
+            font-display: swap;
+        }
+
         :root {
-            --bg-color: #070a13;
-            --card-bg: rgba(17, 24, 39, 0.75);
-            --border-color: #1f2937;
-            --primary: #3b82f6;
+            --bg-color: #050e08;
+            --card-bg: rgba(12, 31, 20, 0.75);
+            --border-color: #1c3e29;
+            --primary: #22c55e;
             --danger: #ef4444;
             --success: #10b981;
             --text-color: #f9fafb;
@@ -21,7 +27,10 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'M PLUS 2', sans-serif;
+            font-family: 'x12y16pxMaruMonica', 'M PLUS 2', sans-serif;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: none;
+            font-smooth: never;
             margin: 0;
             padding: 20px;
             box-sizing: border-box;

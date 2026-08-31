@@ -8,20 +8,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'x12y16pxMaruMonica';
+            src: url('/static/x12y16pxMaruMonica.ttf') format('truetype');
+            font-display: swap;
+        }
+
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #061009;
+            --card-bg: #0c1f13;
             --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
+            --text-muted: #a3b8a8;
+            --primary: #22c55e;
+            --primary-hover: #16a34a;
             --success: #10b981;
             --error: #ef4444;
-            --border: #334155;
+            --border: #1a3f28;
         }
 
         body {
-            font-family: 'M PLUS 2', sans-serif;
+            font-family: 'x12y16pxMaruMonica', 'M PLUS 2', sans-serif;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: none;
+            font-smooth: never;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
