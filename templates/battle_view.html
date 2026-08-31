@@ -148,6 +148,11 @@
     </style>
 </head>
 <body>
+    <!-- Slide Container -->
+    <div id="slide-container" style="display: none; width: 100%; max-width: 900px; margin-bottom: 20px; aspect-ratio: 16/9; background: #000; border: 4px solid #3b82f6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <iframe id="slide-iframe" src="" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    </div>
+
     <div class="arena-container">
         <div id="active-battle-area" class="hidden">
             <div class="battle-header" id="battle-title">PLAYER 1 VS PLAYER 2</div>
@@ -204,68 +209,90 @@
                 const res = await fetch('/api/battle/viewer/status');
                 const data = await res.json();
                 
-                if (data.success && data.active) {
-                    document.getElementById('no-battle-area').classList.add('hidden');
-                    document.getElementById('active-battle-area').classList.remove('hidden');
-                    
-                    document.getElementById('battle-title').textContent = `${data.player_a_name} VS ${data.player_b_name}`;
-                    
-                    // Pokemons
-                    const pokeA = data.a_pokemon[data.a_active_idx];
-                    const pokeB = data.b_pokemon[data.b_active_idx];
-                    
-                    if (pokeA && pokeB) {
-                        // Check if player selected for grading
-                        const hasTarget = !!data.target_player; // 'A' or 'B'
-                        
-                        if (hasTarget) {
-                            // Target mode: Hide score box, show pokemon details
-                            document.getElementById('grader-only-score-box').classList.add('hidden');
-                            document.getElementById('pokes-row-area').classList.remove('hidden');
-                            
-                            // A
-                            document.getElementById('player-a-name').textContent = data.player_a_name;
-                            document.getElementById('poke-a-name').textContent = pokeA.name;
-                            document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
-                            const hpFillA = (pokeA.hp / pokeA.max_hp) * 100;
-                            document.getElementById('poke-a-hp-fill').style.width = `${hpFillA}%`;
-                            document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
-                            
-                            // B
-                            document.getElementById('player-b-name').textContent = data.player_b_name;
-                            document.getElementById('poke-b-name').textContent = pokeB.name;
-                            document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
-                            const finalHpB = pokeB.max_hp > 0 ? (pokeB.hp / pokeB.max_hp) * 100 : 0;
-                            document.getElementById('poke-b-hp-fill').style.width = `${finalHpB}%`;
-                            document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
-                            
-                            // Active target highlights
-                            document.getElementById('card-a').className = 'side-card' + (data.target_player === 'A' ? ' active-target' : '');
-                            document.getElementById('card-b').className = 'side-card' + (data.target_player === 'B' ? ' active-target' : '');
-                        } else {
-                            // Grader only mode: Show score box if last_confirmed_score is not null, hide pokemon details
-                            document.getElementById('pokes-row-area').classList.add('hidden');
-                            if (data.last_confirmed_score !== null) {
-                                document.getElementById('grader-only-score-box').classList.remove('hidden');
-                                document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
-                            } else {
-                                document.getElementById('grader-only-score-box').classList.add('hidden');
+                if (data.success) {
+                    // Update slide
+                    const slideContainer = document.getElementById('slide-container');
+                    const slideIframe = document.getElementById('slide-iframe');
+                    if (data.slide_url) {
+                        let embedUrl = data.slide_url;
+                        if (embedUrl.includes('docs.google.com/presentation') && !embedUrl.includes('/embed')) {
+                            embedUrl = embedUrl.replace(/\/edit(\?.*)?$/, '/embed').replace(/\/pub(\?.*)?$/, '/embed');
+                            if (!embedUrl.includes('/embed')) {
+                                embedUrl = embedUrl.split('?')[0] + '/embed';
                             }
                         }
+                        if (slideIframe.src !== embedUrl) {
+                            slideIframe.src = embedUrl;
+                        }
+                        slideContainer.style.display = 'block';
+                    } else {
+                        slideContainer.style.display = 'none';
+                        slideIframe.src = '';
                     }
 
-                    // Log Messages
-                    const logBox = document.getElementById('battle-log');
-                    logBox.innerHTML = '';
-                    (data.messages || []).forEach(msg => {
-                        const div = document.createElement('div');
-                        div.textContent = msg;
-                        logBox.appendChild(div);
-                    });
-                    logBox.scrollTop = logBox.scrollHeight;
-                } else {
-                    document.getElementById('no-battle-area').classList.remove('hidden');
-                    document.getElementById('active-battle-area').classList.add('hidden');
+                    if (data.active) {
+                        document.getElementById('no-battle-area').classList.add('hidden');
+                        document.getElementById('active-battle-area').classList.remove('hidden');
+                        
+                        document.getElementById('battle-title').textContent = `${data.player_a_name} VS ${data.player_b_name}`;
+                        
+                        // Pokemons
+                        const pokeA = data.a_pokemon[data.a_active_idx];
+                        const pokeB = data.b_pokemon[data.b_active_idx];
+                        
+                        if (pokeA && pokeB) {
+                            // Check if player selected for grading
+                            const hasTarget = !!data.target_player; // 'A' or 'B'
+                            
+                            if (hasTarget) {
+                                // Target mode: Hide score box, show pokemon details
+                                document.getElementById('grader-only-score-box').classList.add('hidden');
+                                document.getElementById('pokes-row-area').classList.remove('hidden');
+                                
+                                // A
+                                document.getElementById('player-a-name').textContent = data.player_a_name;
+                                document.getElementById('poke-a-name').textContent = pokeA.name;
+                                document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
+                                const hpFillA = (pokeA.hp / pokeA.max_hp) * 100;
+                                document.getElementById('poke-a-hp-fill').style.width = `${hpFillA}%`;
+                                document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
+                                
+                                // B
+                                document.getElementById('player-b-name').textContent = data.player_b_name;
+                                document.getElementById('poke-b-name').textContent = pokeB.name;
+                                document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
+                                const finalHpB = pokeB.max_hp > 0 ? (pokeB.hp / pokeB.max_hp) * 100 : 0;
+                                document.getElementById('poke-b-hp-fill').style.width = `${finalHpB}%`;
+                                document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
+                                
+                                // Active target highlights
+                                document.getElementById('card-a').className = 'side-card' + (data.target_player === 'A' ? ' active-target' : '');
+                                document.getElementById('card-b').className = 'side-card' + (data.target_player === 'B' ? ' active-target' : '');
+                            } else {
+                                // Grader only mode: Show score box if last_confirmed_score is not null, hide pokemon details
+                                document.getElementById('pokes-row-area').classList.add('hidden');
+                                if (data.last_confirmed_score !== null) {
+                                    document.getElementById('grader-only-score-box').classList.remove('hidden');
+                                    document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
+                                } else {
+                                    document.getElementById('grader-only-score-box').classList.add('hidden');
+                                }
+                            }
+                        }
+
+                        // Log Messages
+                        const logBox = document.getElementById('battle-log');
+                        logBox.innerHTML = '';
+                        (data.messages || []).forEach(msg => {
+                            const div = document.createElement('div');
+                            div.textContent = msg;
+                            logBox.appendChild(div);
+                        });
+                        logBox.scrollTop = logBox.scrollHeight;
+                    } else {
+                        document.getElementById('no-battle-area').classList.remove('hidden');
+                        document.getElementById('active-battle-area').classList.add('hidden');
+                    }
                 }
             } catch (err) {
                 console.error("Error updating battle status:", err);

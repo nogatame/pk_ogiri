@@ -1694,6 +1694,15 @@ def admin_battle_status():
     })
 
 
+@app.route('/api/admin/battle/set_slide', methods=['POST'])
+def admin_set_slide():
+    data = request.json or {}
+    slide_url = data.get('slide_url', '').strip()
+    active_battle["slide_url"] = slide_url if slide_url else None
+    save_battle_state()
+    return jsonify({"success": True, "message": "スライドURLを更新しました。"})
+
+
 @app.route('/api/admin/battle/start', methods=['POST'])
 def admin_battle_start():
     data = request.json or {}

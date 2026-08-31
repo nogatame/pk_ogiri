@@ -364,6 +364,17 @@
         const battleAdminHTML = `
         <div class="card" style="margin-top: 30px;">
             <h2>対戦管理（ポケモンバトル）</h2>
+            
+            <!-- Slide URL settings -->
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 10px;">📺 観戦画面のスライドURL設定</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="slide-url-input" placeholder="GoogleスライドのURLを貼り付け（例: https://docs.google.com/presentation/d/.../edit）" style="flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: #1e293b; color: white;">
+                    <button id="save-slide-url-btn" class="btn" style="background-color: var(--primary); padding: 8px 16px;">適用する</button>
+                    <button id="clear-slide-url-btn" class="btn" style="background-color: var(--error); padding: 8px 16px;">解除</button>
+                </div>
+            </div>
+
             <div style="display: flex; gap: 20px; margin-bottom: 20px;">
                 <div style="flex: 1; background: #0f172a; padding: 15px; border-radius: 8px;">
                     <h3>⚔️ バトル待機中の参加者</h3>
@@ -467,6 +478,12 @@
                 const response = await fetch('/api/admin/battle/status');
                 const data = await response.json();
                 if (data.success) {
+                    // Update Slide URL input (only if user is not actively focusing on it)
+                    const slideInput = document.getElementById('slide-url-input');
+                    if (document.activeElement !== slideInput) {
+                        slideInput.value = data.active_battle.slide_url || '';
+                    }
+
                     // Update waiting list
                     const waitingList = document.getElementById('battle-waiting-list');
                     const selectA = document.getElementById('select-player-a');
@@ -603,6 +620,49 @@
                 console.error("Error fetching battle admin status:", err);
             }
         }
+
+        // Slide URL handlers
+        document.getElementById('save-slide-url-btn').addEventListener('click', async () => {
+            const slideUrl = document.getElementById('slide-url-input').value;
+            try {
+                const response = await fetch('/api/admin/battle/set_slide', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slide_url: slideUrl })
+                });
+                const resData = await response.json();
+                if (resData.success) {
+                    showToast(resData.message);
+                    fetchBattleStatus();
+                } else {
+                    showToast(resData.message || 'スライド設定エラー', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        });
+
+        document.getElementById('clear-slide-url-btn').addEventListener('click', async () => {
+            document.getElementById('slide-url-input').value = '';
+            try {
+                const response = await fetch('/api/admin/battle/set_slide', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slide_url: '' })
+                });
+                const resData = await response.json();
+                if (resData.success) {
+                    showToast('スライドを解除しました。');
+                    fetchBattleStatus();
+                } else {
+                    showToast(resData.message || 'スライド解除エラー', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        });
 
         // Start battle btn bind
         document.getElementById('start-battle-btn').addEventListener('click', async () => {
