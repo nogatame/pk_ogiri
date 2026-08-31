@@ -50,12 +50,16 @@ active_battle = {
 
 BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
 
+def get_kv_credentials():
+    url = os.environ.get('KV_REST_API_URL') or os.environ.get('UPSTASH_REDIS_REST_URL')
+    token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+    return url, token
+
 def load_battle_state():
     global battle_waiting_players, grading_viewers, active_battle
     
     # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
-    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
-    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
     if KV_REST_API_URL and KV_REST_API_TOKEN:
         try:
             url = KV_REST_API_URL.rstrip('/')
@@ -100,8 +104,7 @@ def load_battle_state():
 
 def save_battle_state():
     # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
-    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
-    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
     if KV_REST_API_URL and KV_REST_API_TOKEN:
         try:
             url = KV_REST_API_URL.rstrip('/')
@@ -1981,24 +1984,26 @@ def battle_viewer_status():
 
 @app.route('/api/admin/debug_kv', methods=['GET'])
 def debug_kv():
-    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
-    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    url, token = get_kv_credentials()
     
-    if not KV_REST_API_URL or not KV_REST_API_TOKEN:
+    if not url or not token:
         return jsonify({
             "status": "missing_credentials",
-            "URL_exists": KV_REST_API_URL is not None,
-            "TOKEN_exists": KV_REST_API_TOKEN is not None
+            "KV_REST_API_URL_exists": os.environ.get('KV_REST_API_URL') is not None,
+            "KV_REST_API_TOKEN_exists": os.environ.get('KV_REST_API_TOKEN') is not None,
+            "UPSTASH_REDIS_REST_URL_exists": os.environ.get('UPSTASH_REDIS_REST_URL') is not None,
+            "UPSTASH_REDIS_REST_TOKEN_exists": os.environ.get('UPSTASH_REDIS_REST_TOKEN') is not None
         })
         
     try:
-        url = KV_REST_API_URL.rstrip('/')
-        headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
-        res = requests.post(url, headers=headers, json=["PING"])
+        url_clean = url.rstrip('/')
+        headers = {'Authorization': f'Bearer {token}'}
+        res = requests.post(url_clean, headers=headers, json=["PING"])
         return jsonify({
             "status": "connected",
             "http_status": res.status_code,
-            "response": res.json() if res.status_code == 200 else res.text
+            "response": res.json() if res.status_code == 200 else res.text,
+            "using_upstash_var": os.environ.get('UPSTASH_REDIS_REST_URL') is not None
         })
     except Exception as e:
         return jsonify({
