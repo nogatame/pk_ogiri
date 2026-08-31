@@ -1979,6 +1979,33 @@ def battle_viewer_status():
         })
     return jsonify(res)
 
+@app.route('/api/admin/debug_kv', methods=['GET'])
+def debug_kv():
+    KV_REST_API_URL = os.environ.get('KV_REST_API_URL')
+    KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN')
+    
+    if not KV_REST_API_URL or not KV_REST_API_TOKEN:
+        return jsonify({
+            "status": "missing_credentials",
+            "URL_exists": KV_REST_API_URL is not None,
+            "TOKEN_exists": KV_REST_API_TOKEN is not None
+        })
+        
+    try:
+        url = KV_REST_API_URL.rstrip('/')
+        headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+        res = requests.post(url, headers=headers, json=["PING"])
+        return jsonify({
+            "status": "connected",
+            "http_status": res.status_code,
+            "response": res.json() if res.status_code == 200 else res.text
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        })
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
