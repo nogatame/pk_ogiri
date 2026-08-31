@@ -429,6 +429,9 @@ el.startGameBtn.addEventListener('click', () => {
 function initTabNavigation() {
     el.tabs.forEach(tab => {
         tab.addEventListener('click', () => {
+            if (typeof currentBattleRole !== 'undefined' && currentBattleRole) {
+                return;
+            }
             // Remove active classes
             el.tabs.forEach(t => t.classList.remove('active'));
             el.tabContents.forEach(c => {
@@ -2145,8 +2148,10 @@ async function startBattlePolling() {
                         currentBattleRole = data.role;
                         showBattleSubview('battle-player-arena-subview');
                         updateBattlePlayerArena(data);
+                        document.getElementById('tabs-bar').classList.add('hidden');
                     } else {
                         // Not playing in active battle. Show mode screen (or prompt they are not in battle)
+                        document.getElementById('tabs-bar').classList.remove('hidden');
                         if (!data.waiting && !state.isJoiningOrWaiting) {
                             if (document.getElementById('battle-waiting-subview').style.display !== 'none') {
                                 showBattleSubview('battle-mode-selection');
@@ -2155,6 +2160,7 @@ async function startBattlePolling() {
                     }
                 } else {
                     currentBattleRole = null;
+                    document.getElementById('tabs-bar').classList.remove('hidden');
                     if (data.waiting || state.isJoiningOrWaiting) {
                         showBattleSubview('battle-waiting-subview');
                     } else {

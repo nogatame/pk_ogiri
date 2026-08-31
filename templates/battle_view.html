@@ -242,7 +242,7 @@
                         
                         if (pokeA && pokeB) {
                             // Check if player selected for grading
-                            const hasTarget = !!data.target_player; // 'A' or 'B'
+                            const hasTarget = data.target_player === 'A' || data.target_player === 'B'; // 'A' or 'B'
                             
                             if (hasTarget) {
                                 // Target mode: Hide score box, show pokemon details

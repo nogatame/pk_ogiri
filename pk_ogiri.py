@@ -1136,6 +1136,7 @@ def use_tm():
         return jsonify({"success": False, "message": f"わざマシン使用エラー: {str(e)}"}), 500
 
 @app.route('/battle_view')
+@app.route('/battleview')
 def battle_view():
     return render_template('battle_view.html')
 
@@ -1359,6 +1360,7 @@ def confirm_score_internal(forced_score=None):
         active_battle["last_confirmed_score"] = score
         active_battle["last_calculated_score"] = score
         active_battle["messages"].append(f"採点結果: {score}点！")
+        active_battle["target_player"] = None
         active_battle["scores"] = []
         active_battle["voted_graders"] = []
         save_battle_state()
@@ -1816,9 +1818,9 @@ def admin_battle_start():
 @app.route('/api/admin/battle/select_target', methods=['POST'])
 def admin_battle_select_target():
     data = request.json or {}
-    target = data.get('target') # 'A', 'B', or None
+    target = data.get('target') # 'A', 'B', 'Other', or None
 
-    if target not in ['A', 'B', None]:
+    if target not in ['A', 'B', 'Other', None]:
         return jsonify({"success": False, "message": "無効なターゲットです。"}), 400
 
     if target == 'A' and not active_battle.get("a_selected_move"):
@@ -1829,8 +1831,17 @@ def admin_battle_select_target():
     active_battle["target_player"] = target
     active_battle["scores"] = [] # Reset scores for next target
     active_battle["voted_graders"] = []
+    active_battle["last_confirmed_score"] = None
     save_battle_state()
-    return jsonify({"success": True, "message": f"審査対象をプレイヤー {target or '未選択'} に設定しました。"})
+    
+    target_name = "未選択"
+    if target == 'A':
+        target_name = "プレイヤーA"
+    elif target == 'B':
+        target_name = "プレイヤーB"
+    elif target == 'Other':
+        target_name = "その他のプレイヤー"
+    return jsonify({"success": True, "message": f"審査対象を{target_name}に設定しました。"})
 
 
 @app.route('/api/admin/battle/approve_swap', methods=['POST'])
