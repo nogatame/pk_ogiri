@@ -7,216 +7,440 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
     <style>
+        :root {
+            --bg-color: #070a13;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --border-color: #1f2937;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --success: #10b981;
+            --text-color: #f9fafb;
+        }
+
         body {
-            background-color: #0b0f19;
-            color: #fff;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'M PLUS 2', sans-serif;
             margin: 0;
             padding: 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Arena Layout: columns side-by-side */
+        .battle-layout {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+            flex: 1;
+            align-items: stretch;
+            margin-bottom: 20px;
+        }
+
+        .side-column {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .side-column.active-target {
+            border-color: #f59e0b;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+        }
+
+        .side-column.player-a {
+            border-color: var(--primary);
+        }
+        .side-column.player-b {
+            border-color: var(--danger);
+        }
+
+        /* Center column: holds Slide, or Standby message if no slide active */
+        .center-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border: 4px solid #1e293b;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        .slide-container.active-slide {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Info components */
+        .player-header {
+            font-size: 1.15rem;
+            font-weight: 900;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-a .player-header {
+            color: #60a5fa;
+        }
+        .player-b .player-header {
+            color: #f87171;
+        }
+
+        .poke-info-top {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-container {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .type-badge {
+            font-size: 0.8rem;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Type Colors */
+        .type-normal { background-color: #9ca3af; }
+        .type-fire { background-color: #ef4444; }
+        .type-water { background-color: #3b82f6; }
+        .type-grass { background-color: #10b981; }
+        .type-electric { background-color: #f59e0b; color: #000; text-shadow: none; }
+        .type-ice { background-color: #22d3ee; color: #000; text-shadow: none; }
+        .type-fighting { background-color: #dc2626; }
+        .type-poison { background-color: #a855f7; }
+        .type-ground { background-color: #ca8a04; }
+        .type-flying { background-color: #818cf8; }
+        .type-psychic { background-color: #ec4899; }
+        .type-bug { background-color: #84cc16; }
+        .type-rock { background-color: #a16207; }
+        .type-ghost { background-color: #6366f1; }
+        .type-dragon { background-color: #4f46e5; }
+        .type-steel { background-color: #6b7280; }
+        .type-fairy { background-color: #f472b6; }
+        .type-dark { background-color: #374151; }
+
+        .hp-bar-bg {
+            background: #111827;
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid #374151;
+            position: relative;
+        }
+
+        .hp-bar-val {
+            background: var(--success);
+            height: 100%;
+            width: 100%;
+            transition: width 0.5s ease-out, background-color 0.3s;
+        }
+
+        .hp-text {
+            text-align: right;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #d1d5db;
+            margin-top: 4px;
+        }
+
+        /* Face to Face active Pokemon display */
+        .poke-display {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            margin-top: 10px;
         }
-        .arena-container {
-            width: 100%;
-            max-width: 900px;
-            background: #151f32;
-            border: 4px solid #3b82f6;
-            border-radius: 12px;
-            padding: 30px;
-            box-sizing: border-box;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .battle-header {
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 900;
-            margin-bottom: 30px;
-            color: #60a5fa;
-            border-bottom: 2px dashed #1e293b;
-            padding-bottom: 15px;
-        }
-        .pokes-row {
+
+        .poke-avatar {
+            width: 130px;
+            height: 130px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 35px;
+            justify-content: center;
+            font-size: 4.8rem;
+            border-radius: 50%;
+            margin-bottom: 12px;
         }
-        .side-card {
-            flex: 1;
-            background: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 10px;
-            padding: 20px;
-            position: relative;
+
+        .player-a .poke-avatar {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(0,0,0,0) 70%);
         }
-        .side-card.active-target {
-            border-color: #f59e0b;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+
+        .player-b .poke-avatar {
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(0,0,0,0) 70%);
+            transform: scaleX(-1); /* Facing opposite side */
         }
-        .player-name-label {
-            font-size: 0.95rem;
-            color: #94a3b8;
+
+        .poke-name {
+            font-size: 1.6rem;
+            font-weight: 900;
+            text-align: center;
             margin-bottom: 5px;
         }
-        .poke-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 10px;
-        }
-        .poke-name {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #f8fafc;
-        }
+
         .poke-level {
             font-size: 0.9rem;
-            color: #3b82f6;
+            color: #60b5ff;
+            font-weight: bold;
         }
-        .hp-bar-bg {
-            background: #0f172a;
-            height: 16px;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 10px;
-            border: 1px solid #334155;
-        }
-        .hp-bar-val {
-            background: #10b981;
-            height: 100%;
+
+        /* Log Section */
+        .bottom-log-container {
             width: 100%;
-            transition: width 0.5s ease-in-out;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 16px;
+            padding: 15px 25px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
         }
-        .hp-text {
-            text-align: right;
+
+        .log-header {
             font-size: 1rem;
-            font-weight: bold;
-            color: #cbd5e1;
-        }
-        .vs-badge {
-            font-size: 2rem;
             font-weight: 900;
-            color: #ef4444;
-            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            color: #10b981;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .grader-only-container {
-            background: #111827;
-            border: 2px solid #f59e0b;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .grader-score-lbl {
-            font-size: 1.1rem;
-            color: #f59e0b;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .grader-score-val {
-            font-size: 3rem;
-            font-weight: 900;
-            color: #fbbf24;
-            text-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
-        }
+
         .battle-log {
-            background: #090d16;
-            border: 2px solid #1e293b;
-            border-radius: 8px;
-            padding: 20px;
             font-family: monospace;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             line-height: 1.6;
-            min-height: 120px;
-            max-height: 200px;
+            height: 90px;
             overflow-y: auto;
             color: #34d399;
         }
-        .empty-state {
+
+        /* Score Box for grader only target mode */
+        .score-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(7, 10, 19, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 3px solid #f59e0b;
+            z-index: 10;
+        }
+
+        .score-lbl {
+            font-size: 1.5rem;
+            color: #f59e0b;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score-val {
+            font-size: 5.5rem;
+            font-weight: 900;
+            color: #fbbf24;
+            text-shadow: 0 0 25px rgba(251, 191, 36, 0.7);
+        }
+
+        /* Standby state */
+        .standby-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
             text-align: center;
-            padding: 50px 20px;
-            font-size: 1.3rem;
-            color: #94a3b8;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            box-sizing: border-box;
+            aspect-ratio: 16/9;
+        }
+
+        .standby-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .standby-desc {
+            font-size: 1.25rem;
+            color: #9ca3af;
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <!-- Slide Container -->
-    <div id="slide-container" style="display: none; width: 100%; max-width: 900px; margin-bottom: 20px; aspect-ratio: 16/9; background: #000; border: 4px solid #3b82f6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-        <iframe id="slide-iframe" src="" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
-    </div>
 
-    <div class="arena-container">
-        <div id="active-battle-area" class="hidden">
-            <div class="battle-header" id="battle-title">PLAYER 1 VS PLAYER 2</div>
-            
-            <div class="pokes-row" id="pokes-row-area">
-                <!-- Player A -->
-                <div class="side-card" id="card-a">
-                    <div class="player-name-label" id="player-a-name">-</div>
-                    <div class="poke-header">
-                        <span class="poke-name" id="poke-a-name">-</span>
-                        <span class="poke-level" id="poke-a-level">Lv.50</span>
-                    </div>
-                    <div class="hp-bar-bg">
-                        <div class="hp-bar-val" id="poke-a-hp-fill"></div>
-                    </div>
-                    <div class="hp-text" id="poke-a-hp-text">-/-</div>
+    <!-- Main Battle/Slide Layout Area -->
+    <div class="battle-layout">
+        
+        <!-- Left Column: Player A -->
+        <div class="side-column player-a" id="card-a">
+            <div class="player-header" id="player-a-name">PLAYER A</div>
+            <div class="poke-info-top">
+                <div class="type-container" id="poke-a-types">
+                    <!-- Badges injected dynamically -->
                 </div>
-
-                <div class="vs-badge">VS</div>
-
-                <!-- Player B -->
-                <div class="side-card" id="card-b">
-                    <div class="player-name-label" id="player-b-name">-</div>
-                    <div class="poke-header">
-                        <span class="poke-name" id="poke-b-name">-</span>
-                        <span class="poke-level" id="poke-b-level">Lv.50</span>
-                    </div>
-                    <div class="hp-bar-bg">
-                        <div class="hp-bar-val" id="poke-b-hp-fill"></div>
-                    </div>
-                    <div class="hp-text" id="poke-b-hp-text">-/-</div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-val" id="poke-a-hp-fill"></div>
                 </div>
+                <div class="hp-text" id="poke-a-hp-text">-/-</div>
             </div>
-
-            <!-- Grader score only display -->
-            <div class="grader-only-container hidden" id="grader-only-score-box">
-                <div class="grader-score-lbl">現在の採点結果</div>
-                <div class="grader-score-val" id="grader-score-display">0 点</div>
-            </div>
-
-            <div class="battle-log" id="battle-log">
-                <!-- Log messages will append here -->
+            <div class="poke-display">
+                <div class="poke-avatar" id="avatar-a">👾</div>
+                <div class="poke-name" id="poke-a-name">-</div>
+                <div class="poke-level" id="poke-a-level">Lv.50</div>
             </div>
         </div>
 
-        <div id="no-battle-area" class="empty-state">
-            現在、行われているバトルはありません。
+        <!-- Center Column: Slide / Standby -->
+        <div class="center-column">
+            <!-- Slide frame -->
+            <div class="slide-container" id="slide-container" style="display: none;">
+                <iframe id="slide-iframe" src="" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+                
+                <!-- Score Display Overlay (active only when target is Other / spectator only score) -->
+                <div class="score-overlay hidden" id="grader-only-score-box">
+                    <div class="score-lbl">現在の採点結果</div>
+                    <div class="score-val" id="grader-score-display">0 点</div>
+                </div>
+            </div>
+
+            <!-- Standby message (when no slide is active) -->
+            <div class="standby-container" id="standby-view">
+                <div class="standby-title">PK_OGIRI</div>
+                <div class="standby-desc" id="standby-status-desc">現在、行われているバトルはありません。</div>
+            </div>
+        </div>
+
+        <!-- Right Column: Player B -->
+        <div class="side-column player-b" id="card-b">
+            <div class="player-header" id="player-b-name">PLAYER B</div>
+            <div class="poke-info-top">
+                <div class="type-container" id="poke-b-types">
+                    <!-- Badges injected dynamically -->
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-val" id="poke-b-hp-fill"></div>
+                </div>
+                <div class="hp-text" id="poke-b-hp-text">-/-</div>
+            </div>
+            <div class="poke-display">
+                <div class="poke-avatar" id="avatar-b">🐉</div>
+                <div class="poke-name" id="poke-b-name">-</div>
+                <div class="poke-level" id="poke-b-level">Lv.50</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Column: Battle Log Message Box -->
+    <div class="bottom-log-container">
+        <div class="log-header">
+            <span>💬 BATTLE LOG</span>
+        </div>
+        <div class="battle-log" id="battle-log">
+            <!-- Logs will append here -->
         </div>
     </div>
 
     <script>
+        // Mapping of pokemon types to class names
+        const TYPE_MAP = {
+            "ノーマル": "type-normal", "ほのお": "type-fire", "みず": "type-water",
+            "くさ": "type-grass", "でんき": "type-electric", "こおり": "type-ice",
+            "かくとう": "type-fighting", "どく": "type-poison", "じめん": "type-ground",
+            "ひこう": "type-flying", "エスパー": "type-psychic", "むし": "type-bug",
+            "いわ": "type-rock", "ゴースト": "type-ghost", "ドラゴン": "type-dragon",
+            "はがね": "type-steel", "フェアリー": "type-fairy", "あく": "type-dark"
+        };
+
+        function renderTypes(type1, type2) {
+            let html = '';
+            if (type1 && type1 !== '-') {
+                const cls = TYPE_MAP[type1] || 'type-normal';
+                html += `<span class="type-badge ${cls}">${type1}</span>`;
+            }
+            if (type2 && type2 !== '-') {
+                const cls = TYPE_MAP[type2] || 'type-normal';
+                html += `<span class="type-badge ${cls}">${type2}</span>`;
+            }
+            return html || '<span class="type-badge type-normal">???</span>';
+        }
+
         async function updateStatus() {
             try {
                 const res = await fetch('/api/battle/viewer/status');
                 const data = await res.json();
                 
                 if (data.success) {
-                    // Update slide
+                    // 1. Update slide
                     const slideContainer = document.getElementById('slide-container');
+                    const standbyView = document.getElementById('standby-view');
                     const slideIframe = document.getElementById('slide-iframe');
+                    
                     if (data.slide_url) {
                         let embedUrl = data.slide_url;
                         
-                        // If user pasted the whole iframe HTML tag (common in PowerPoint Online/OneDrive), extract the src URL
+                        // Extract URL from raw iframe tag if pasted
                         if (embedUrl.trim().startsWith('<iframe')) {
                             const srcMatch = embedUrl.match(/src=["']([^"']+)["']/i);
                             if (srcMatch) {
@@ -230,78 +454,112 @@
                                 embedUrl = `https://docs.google.com/presentation/d/${match[1]}/embed`;
                             }
                         }
+                        
                         if (slideIframe.src !== embedUrl) {
                             slideIframe.src = embedUrl;
                         }
+                        
                         slideContainer.style.display = 'block';
+                        standbyView.style.display = 'none';
+                        slideContainer.className = 'slide-container active-slide';
                     } else {
                         slideContainer.style.display = 'none';
+                        standbyView.style.display = 'flex';
                         slideIframe.src = '';
+                        slideContainer.className = 'slide-container';
                     }
 
+                    // Update standby text based on battle status
+                    const standbyDesc = document.getElementById('standby-status-desc');
                     if (data.active) {
-                        document.getElementById('no-battle-area').classList.add('hidden');
-                        document.getElementById('active-battle-area').classList.remove('hidden');
+                        standbyDesc.textContent = "お題スライドの表示をお待ちください。";
                         
-                        document.getElementById('battle-title').textContent = `${data.player_a_name} VS ${data.player_b_name}`;
+                        // Show side columns
+                        document.getElementById('card-a').classList.remove('hidden');
+                        document.getElementById('card-b').classList.remove('hidden');
                         
-                        // Pokemons
+                        // Populate Player A details
                         const pokeA = data.a_pokemon[data.a_active_idx];
-                        const pokeB = data.b_pokemon[data.b_active_idx];
-                        
-                        if (pokeA && pokeB) {
-                            // Check if player selected for grading
-                            const hasTarget = data.target_player === 'A' || data.target_player === 'B'; // 'A' or 'B'
+                        if (pokeA) {
+                            document.getElementById('player-a-name').textContent = data.player_a_name || 'PLAYER A';
+                            document.getElementById('poke-a-name').textContent = pokeA.name;
+                            document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
                             
-                            if (hasTarget) {
-                                // Target mode: Hide score box, show pokemon details
-                                document.getElementById('grader-only-score-box').classList.add('hidden');
-                                document.getElementById('pokes-row-area').classList.remove('hidden');
-                                
-                                // A
-                                document.getElementById('player-a-name').textContent = data.player_a_name;
-                                document.getElementById('poke-a-name').textContent = pokeA.name;
-                                document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
-                                const hpFillA = (pokeA.hp / pokeA.max_hp) * 100;
-                                document.getElementById('poke-a-hp-fill').style.width = `${hpFillA}%`;
-                                document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
-                                
-                                // B
-                                document.getElementById('player-b-name').textContent = data.player_b_name;
-                                document.getElementById('poke-b-name').textContent = pokeB.name;
-                                document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
-                                const finalHpB = pokeB.max_hp > 0 ? (pokeB.hp / pokeB.max_hp) * 100 : 0;
-                                document.getElementById('poke-b-hp-fill').style.width = `${finalHpB}%`;
-                                document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
-                                
-                                // Active target highlights
-                                document.getElementById('card-a').className = 'side-card' + (data.target_player === 'A' ? ' active-target' : '');
-                                document.getElementById('card-b').className = 'side-card' + (data.target_player === 'B' ? ' active-target' : '');
+                            const hpFillA = pokeA.max_hp > 0 ? (pokeA.hp / pokeA.max_hp) * 100 : 0;
+                            const hpBarA = document.getElementById('poke-a-hp-fill');
+                            hpBarA.style.width = `${hpFillA}%`;
+                            
+                            // Dynamically color HP bar
+                            if (hpFillA <= 20) {
+                                hpBarA.style.backgroundColor = '#ef4444'; // Red
+                            } else if (hpFillA <= 50) {
+                                hpBarA.style.backgroundColor = '#f59e0b'; // Orange
                             } else {
-                                // Grader only mode: Show score box if last_confirmed_score is not null, hide pokemon details
-                                document.getElementById('pokes-row-area').classList.add('hidden');
-                                if (data.last_confirmed_score !== null) {
-                                    document.getElementById('grader-only-score-box').classList.remove('hidden');
-                                    document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
-                                } else {
-                                    document.getElementById('grader-only-score-box').classList.add('hidden');
-                                }
+                                hpBarA.style.backgroundColor = '#10b981'; // Green
                             }
+                            
+                            document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
+                            document.getElementById('poke-a-types').innerHTML = renderTypes(pokeA.type1, pokeA.type2);
                         }
 
-                        // Log Messages
-                        const logBox = document.getElementById('battle-log');
-                        logBox.innerHTML = '';
-                        (data.messages || []).forEach(msg => {
-                            const div = document.createElement('div');
-                            div.textContent = msg;
-                            logBox.appendChild(div);
-                        });
-                        logBox.scrollTop = logBox.scrollHeight;
+                        // Populate Player B details
+                        const pokeB = data.b_pokemon[data.b_active_idx];
+                        if (pokeB) {
+                            document.getElementById('player-b-name').textContent = data.player_b_name || 'PLAYER B';
+                            document.getElementById('poke-b-name').textContent = pokeB.name;
+                            document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
+                            
+                            const hpFillB = pokeB.max_hp > 0 ? (pokeB.hp / pokeB.max_hp) * 100 : 0;
+                            const hpBarB = document.getElementById('poke-b-hp-fill');
+                            hpBarB.style.width = `${hpFillB}%`;
+                            
+                            // Dynamically color HP bar
+                            if (hpFillB <= 20) {
+                                hpBarB.style.backgroundColor = '#ef4444';
+                            } else if (hpFillB <= 50) {
+                                hpBarB.style.backgroundColor = '#f59e0b';
+                            } else {
+                                hpBarB.style.backgroundColor = '#10b981';
+                            }
+                            
+                            document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
+                            document.getElementById('poke-b-types').innerHTML = renderTypes(pokeB.type1, pokeB.type2);
+                        }
+
+                        // Highlight target selections
+                        const isTargetA = data.target_player === 'A';
+                        const isTargetB = data.target_player === 'B';
+                        
+                        document.getElementById('card-a').className = 'side-column player-a' + (isTargetA ? ' active-target' : '');
+                        document.getElementById('card-b').className = 'side-column player-b' + (isTargetB ? ' active-target' : '');
+
+                        // Handle Grader Only / Spectator Score display
+                        const scoreBox = document.getElementById('grader-only-score-box');
+                        // Show score overlay inside slide area if target is not A and not B, but score is confirmed
+                        if (!isTargetA && !isTargetB && data.last_confirmed_score !== null) {
+                            scoreBox.classList.remove('hidden');
+                            document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
+                        } else {
+                            scoreBox.classList.add('hidden');
+                        }
                     } else {
-                        document.getElementById('no-battle-area').classList.remove('hidden');
-                        document.getElementById('active-battle-area').classList.add('hidden');
+                        standbyDesc.textContent = "現在、行われているバトルはありません。";
+                        
+                        // Hide side columns when no active battle
+                        document.getElementById('card-a').classList.add('hidden');
+                        document.getElementById('card-b').classList.add('hidden');
+                        document.getElementById('grader-only-score-box').classList.add('hidden');
                     }
+
+                    // 4. Update Logs
+                    const logBox = document.getElementById('battle-log');
+                    logBox.innerHTML = '';
+                    (data.messages || []).forEach(msg => {
+                        const div = document.createElement('div');
+                        div.textContent = msg;
+                        logBox.appendChild(div);
+                    });
+                    logBox.scrollTop = logBox.scrollHeight;
                 }
             } catch (err) {
                 console.error("Error updating battle status:", err);
