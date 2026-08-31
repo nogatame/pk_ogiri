@@ -31,51 +31,38 @@
             justify-content: space-between;
         }
 
-        /* Arena Layout: columns side-by-side */
+        /* 3-Column Layout */
         .battle-layout {
             display: flex;
             width: 100%;
             gap: 20px;
             flex: 1;
-            align-items: stretch;
+            align-items: center;
             margin-bottom: 20px;
         }
 
+        /* Frameless Side Columns for Pokemons */
         .side-column {
-            width: 250px;
+            width: 300px;
             flex-shrink: 0;
-            background: var(--card-bg);
-            border: 3px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
+            background: transparent;
+            border: none;
+            padding: 10px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
         }
 
-        .side-column.active-target {
-            border-color: #f59e0b;
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
-        }
-
-        .side-column.player-a {
-            border-color: var(--primary);
-        }
-        .side-column.player-b {
-            border-color: var(--danger);
-        }
-
-        /* Center column: holds Slide, or Standby message if no slide active */
+        /* Center Column: Slide / Standby */
         .center-column {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            max-width: 700px; /* Make center slide smaller */
+            margin: 0 auto;
         }
 
         .slide-container {
@@ -100,44 +87,58 @@
             border: none;
         }
 
-        /* Info components */
-        .player-header {
-            font-size: 1.15rem;
-            font-weight: 900;
-            text-align: center;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 8px;
+        /* Info components above image */
+        .poke-info-top {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             margin-bottom: 15px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .poke-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .poke-name {
+            font-size: 1.8rem;
+            font-weight: 900;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .player-a .player-header {
+        .player-a .poke-name {
             color: #60a5fa;
         }
-        .player-b .player-header {
+
+        .player-b .poke-name {
             color: #f87171;
         }
 
-        .poke-info-top {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+        .poke-level {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            font-weight: bold;
         }
 
         .type-container {
             display: flex;
             gap: 6px;
-            justify-content: center;
+            justify-content: flex-start;
             flex-wrap: wrap;
         }
 
         .type-badge {
             font-size: 0.8rem;
             font-weight: 900;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 6px;
             color: #fff;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -165,11 +166,12 @@
 
         .hp-bar-bg {
             background: #111827;
-            height: 18px;
-            border-radius: 9px;
+            height: 16px;
+            border-radius: 8px;
             overflow: hidden;
             border: 1px solid #374151;
             position: relative;
+            margin-top: 4px;
         }
 
         .hp-bar-val {
@@ -184,50 +186,35 @@
             font-size: 0.95rem;
             font-weight: bold;
             color: #d1d5db;
-            margin-top: 4px;
         }
 
-        /* Face to Face active Pokemon display */
+        /* Pokemon Image display with active target neon highlights */
         .poke-display {
-            flex: 1;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            margin-top: 10px;
-        }
-
-        .poke-avatar {
-            width: 130px;
-            height: 130px;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 4.8rem;
-            border-radius: 50%;
-            margin-bottom: 12px;
+            height: 300px;
         }
 
-        .player-a .poke-avatar {
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(0,0,0,0) 70%);
+        .poke-image {
+            width: 280px;
+            height: 280px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
+            transition: filter 0.3s ease, transform 0.3s ease;
         }
 
-        .player-b .poke-avatar {
-            background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, rgba(0,0,0,0) 70%);
-            transform: scaleX(-1); /* Facing opposite side */
+        #poke-b-img {
+            transform: scaleX(-1); /* Face left */
         }
 
-        .poke-name {
-            font-size: 1.6rem;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 5px;
+        /* Neon glow on active target image */
+        .active-target #poke-a-img {
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.4));
         }
-
-        .poke-level {
-            font-size: 0.9rem;
-            color: #60b5ff;
-            font-weight: bold;
+        .active-target #poke-b-img {
+            transform: scaleX(-1);
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.4));
         }
 
         /* Log Section */
@@ -334,8 +321,11 @@
         
         <!-- Left Column: Player A -->
         <div class="side-column player-a" id="card-a">
-            <div class="player-header" id="player-a-name">PLAYER A</div>
             <div class="poke-info-top">
+                <div class="poke-meta-row">
+                    <span class="poke-name" id="poke-a-name">-</span>
+                    <span class="poke-level" id="poke-a-level">Lv.50</span>
+                </div>
                 <div class="type-container" id="poke-a-types">
                     <!-- Badges injected dynamically -->
                 </div>
@@ -345,9 +335,7 @@
                 <div class="hp-text" id="poke-a-hp-text">-/-</div>
             </div>
             <div class="poke-display">
-                <div class="poke-avatar" id="avatar-a">👾</div>
-                <div class="poke-name" id="poke-a-name">-</div>
-                <div class="poke-level" id="poke-a-level">Lv.50</div>
+                <img id="poke-a-img" class="poke-image" src="" alt="pokemon A">
             </div>
         </div>
 
@@ -373,8 +361,11 @@
 
         <!-- Right Column: Player B -->
         <div class="side-column player-b" id="card-b">
-            <div class="player-header" id="player-b-name">PLAYER B</div>
             <div class="poke-info-top">
+                <div class="poke-meta-row">
+                    <span class="poke-name" id="poke-b-name">-</span>
+                    <span class="poke-level" id="poke-b-level">Lv.50</span>
+                </div>
                 <div class="type-container" id="poke-b-types">
                     <!-- Badges injected dynamically -->
                 </div>
@@ -384,9 +375,7 @@
                 <div class="hp-text" id="poke-b-hp-text">-/-</div>
             </div>
             <div class="poke-display">
-                <div class="poke-avatar" id="avatar-b">🐉</div>
-                <div class="poke-name" id="poke-b-name">-</div>
-                <div class="poke-level" id="poke-b-level">Lv.50</div>
+                <img id="poke-b-img" class="poke-image" src="" alt="pokemon B">
             </div>
         </div>
 
@@ -412,6 +401,40 @@
             "いわ": "type-rock", "ゴースト": "type-ghost", "ドラゴン": "type-dragon",
             "はがね": "type-steel", "フェアリー": "type-fairy", "あく": "type-dark"
         };
+
+        // Static Pokedex ID dictionary for the 72 custom Pokemons
+        const POKE_ID_MAP = {
+            "アーケオス": 567, "アーマーガア": 823, "アシレーヌ": 730, "アマルルガ": 699,
+            "イオルブ": 826, "イワパレス": 558, "ウォッシュロトム": 479, "ウルガモス": 637,
+            "エルレイド": 475, "エンニュート": 758, "エンペルト": 395, "オーロンゲ": 861,
+            "オニシズクモ": 752, "オンバーン": 715, "ガオガエン": 727, "カバルドン": 450,
+            "カビゴン": 143, "キノガッサ": 286, "ギャラドス": 130, "キラフロル": 970,
+            "クレベース": 713, "ゲンガー": 94, "ケンタロス": 128, "コノヨザル": 979,
+            "サーナイト": 282, "サーフゴー": 1000, "サザンドラ": 635, "シャワーズ": 134,
+            "シュバルゴ": 589, "ズルズキン": 560, "ゾロアーク": 571, "デスカーン": 563,
+            "デンリュウ": 181, "ドオー": 980, "トゲキッス": 468, "ドダイトス": 389,
+            "ドドゲザン": 983, "ドラパルト": 887, "ドリュウズ": 530, "ニンフィア": 700,
+            "ヌメルゴン": 706, "ネンドール": 344, "ノクタス": 332, "バイバニラ": 584,
+            "ハガネール": 208, "バクーダ": 323, "バシャーモ": 257, "ハッサム": 212,
+            "ハラバリー": 939, "バンギラス": 248, "ヒートロトム": 479, "ブリジュラス": 1018,
+            "ブリムオン": 858, "ベトベトン": 89, "ボーマンダ": 373, "ボスゴドラ": 306,
+            "ポリゴンZ": 137, "マタドガス": 110, "マタドガス（ガラル）": 110, "マンムー": 473,
+            "ミカルゲ": 442, "ムクホーク": 398, "メタグロス": 376, "ヤドラン": 80,
+            "ユレイドル": 346, "ヨノワール": 477, "ラプラス": 131, "ラフレシア": 45,
+            "ランクルス": 579, "リザードン": 6, "ルカリオ": 448, "レントラー": 405
+        };
+
+        function getPokedexId(name) {
+            if (!name) return 1;
+            let clean = name.split('(')[0].split('（')[0].trim();
+            if (clean.includes('マタドガス')) return 110;
+            return POKE_ID_MAP[clean] || POKE_ID_MAP[name] || 1;
+        }
+
+        function getPokemonImageUrl(name) {
+            const id = getPokedexId(name);
+            return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+        }
 
         function renderTypes(type1, type2) {
             let html = '';
@@ -481,7 +504,6 @@
                         // Populate Player A details
                         const pokeA = data.a_pokemon[data.a_active_idx];
                         if (pokeA) {
-                            document.getElementById('player-a-name').textContent = data.player_a_name || 'PLAYER A';
                             document.getElementById('poke-a-name').textContent = pokeA.name;
                             document.getElementById('poke-a-level').textContent = `Lv.${pokeA.level || 50}`;
                             
@@ -500,12 +522,18 @@
                             
                             document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
                             document.getElementById('poke-a-types').innerHTML = renderTypes(pokeA.type1, pokeA.type2);
+                            
+                            // Set Pokemon Image
+                            const imgA = document.getElementById('poke-a-img');
+                            const targetUrlA = getPokemonImageUrl(pokeA.name);
+                            if (imgA.src !== targetUrlA) {
+                                imgA.src = targetUrlA;
+                            }
                         }
 
                         // Populate Player B details
                         const pokeB = data.b_pokemon[data.b_active_idx];
                         if (pokeB) {
-                            document.getElementById('player-b-name').textContent = data.player_b_name || 'PLAYER B';
                             document.getElementById('poke-b-name').textContent = pokeB.name;
                             document.getElementById('poke-b-level').textContent = `Lv.${pokeB.level || 50}`;
                             
@@ -524,9 +552,16 @@
                             
                             document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
                             document.getElementById('poke-b-types').innerHTML = renderTypes(pokeB.type1, pokeB.type2);
+
+                            // Set Pokemon Image
+                            const imgB = document.getElementById('poke-b-img');
+                            const targetUrlB = getPokemonImageUrl(pokeB.name);
+                            if (imgB.src !== targetUrlB) {
+                                imgB.src = targetUrlB;
+                            }
                         }
 
-                        // Highlight target selections
+                        // Highlight active targeted image
                         const isTargetA = data.target_player === 'A';
                         const isTargetB = data.target_player === 'B';
                         
@@ -535,7 +570,6 @@
 
                         // Handle Grader Only / Spectator Score display
                         const scoreBox = document.getElementById('grader-only-score-box');
-                        // Show score overlay inside slide area if target is not A and not B, but score is confirmed
                         if (!isTargetA && !isTargetB && data.last_confirmed_score !== null) {
                             scoreBox.classList.remove('hidden');
                             document.getElementById('grader-score-display').textContent = `${data.last_confirmed_score} 点`;
