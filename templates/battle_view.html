@@ -215,6 +215,15 @@
                     const slideIframe = document.getElementById('slide-iframe');
                     if (data.slide_url) {
                         let embedUrl = data.slide_url;
+                        
+                        // If user pasted the whole iframe HTML tag (common in PowerPoint Online/OneDrive), extract the src URL
+                        if (embedUrl.trim().startsWith('<iframe')) {
+                            const srcMatch = embedUrl.match(/src=["']([^"']+)["']/i);
+                            if (srcMatch) {
+                                embedUrl = srcMatch[1];
+                            }
+                        }
+
                         if (embedUrl.includes('docs.google.com/presentation')) {
                             const match = embedUrl.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
                             if (match) {
