@@ -1973,7 +1973,8 @@ def battle_viewer_status():
         "target_player": active_battle["target_player"],
         "scores": active_battle["scores"],
         "score_count": len(active_battle["scores"]),
-        "messages": active_battle["messages"]
+        "messages": active_battle["messages"],
+        "slide_url": active_battle.get("slide_url")
     }
 
     if active_battle["active"]:
