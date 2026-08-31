@@ -188,7 +188,7 @@
             color: #d1d5db;
         }
 
-        /* Pokemon Image display with active target neon highlights */
+        /* Sprite image display with active target neon highlights */
         .poke-display {
             display: flex;
             justify-content: center;
@@ -196,30 +196,37 @@
             height: 300px;
         }
 
-        .poke-image {
-            width: 280px;
-            height: 280px;
-            object-fit: contain;
+        /* Sprite positioning styles */
+        .pokemon-sprite-large {
+            display: inline-block;
+            width: 250px;
+            height: calc(250px * 3220 / 3200); /* preserved aspect ratio */
+            background-image: url('/static/スプライトシート.png');
+            background-repeat: no-repeat;
+            background-size: 1000% 1000%;
+            image-rendering: pixelated; /* Ensure crisp pixel art */
             filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
             transition: filter 0.3s ease, transform 0.3s ease;
         }
 
-        #poke-b-img {
+        #poke-b-sprite-inner {
             transform: scaleX(-1); /* Face left */
         }
 
-        /* Neon glow on active target image */
-        .active-target #poke-a-img {
-            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.4));
+        /* Neon glow on active target sprite */
+        .active-target #poke-a-sprite-inner {
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45));
         }
-        .active-target #poke-b-img {
+        .active-target #poke-b-sprite-inner {
             transform: scaleX(-1);
-            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.4));
+            filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45));
         }
 
-        /* Log Section */
+        /* Log Section with narrower width and centered */
         .bottom-log-container {
             width: 100%;
+            max-width: 900px; /* Limit width */
+            margin: 0 auto; /* Center log box */
             background: var(--card-bg);
             border: 3px solid var(--border-color);
             border-radius: 16px;
@@ -335,7 +342,7 @@
                 <div class="hp-text" id="poke-a-hp-text">-/-</div>
             </div>
             <div class="poke-display">
-                <img id="poke-a-img" class="poke-image" src="" alt="pokemon A">
+                <div id="poke-a-sprite-inner" class="pokemon-sprite-large"></div>
             </div>
         </div>
 
@@ -375,7 +382,7 @@
                 <div class="hp-text" id="poke-b-hp-text">-/-</div>
             </div>
             <div class="poke-display">
-                <img id="poke-b-img" class="poke-image" src="" alt="pokemon B">
+                <div id="poke-b-sprite-inner" class="pokemon-sprite-large"></div>
             </div>
         </div>
 
@@ -402,38 +409,19 @@
             "はがね": "type-steel", "フェアリー": "type-fairy", "あく": "type-dark"
         };
 
-        // Static Pokedex ID dictionary for the 72 custom Pokemons
-        const POKE_ID_MAP = {
-            "アーケオス": 567, "アーマーガア": 823, "アシレーヌ": 730, "アマルルガ": 699,
-            "イオルブ": 826, "イワパレス": 558, "ウォッシュロトム": 479, "ウルガモス": 637,
-            "エルレイド": 475, "エンニュート": 758, "エンペルト": 395, "オーロンゲ": 861,
-            "オニシズクモ": 752, "オンバーン": 715, "ガオガエン": 727, "カバルドン": 450,
-            "カビゴン": 143, "キノガッサ": 286, "ギャラドス": 130, "キラフロル": 970,
-            "クレベース": 713, "ゲンガー": 94, "ケンタロス": 128, "コノヨザル": 979,
-            "サーナイト": 282, "サーフゴー": 1000, "サザンドラ": 635, "シャワーズ": 134,
-            "シュバルゴ": 589, "ズルズキン": 560, "ゾロアーク": 571, "デスカーン": 563,
-            "デンリュウ": 181, "ドオー": 980, "トゲキッス": 468, "ドダイトス": 389,
-            "ドドゲザン": 983, "ドラパルト": 887, "ドリュウズ": 530, "ニンフィア": 700,
-            "ヌメルゴン": 706, "ネンドール": 344, "ノクタス": 332, "バイバニラ": 584,
-            "ハガネール": 208, "バクーダ": 323, "バシャーモ": 257, "ハッサム": 212,
-            "ハラバリー": 939, "バンギラス": 248, "ヒートロトム": 479, "ブリジュラス": 1018,
-            "ブリムオン": 858, "ベトベトン": 89, "ボーマンダ": 373, "ボスゴドラ": 306,
-            "ポリゴンZ": 137, "マタドガス": 110, "マタドガス（ガラル）": 110, "マンムー": 473,
-            "ミカルゲ": 442, "ムクホーク": 398, "メタグロス": 376, "ヤドラン": 80,
-            "ユレイドル": 346, "ヨノワール": 477, "ラプラス": 131, "ラフレシア": 45,
-            "ランクルス": 579, "リザードン": 6, "ルカリオ": 448, "レントラー": 405
-        };
-
-        function getPokedexId(name) {
-            if (!name) return 1;
-            let clean = name.split('(')[0].split('（')[0].trim();
-            if (clean.includes('マタドガス')) return 110;
-            return POKE_ID_MAP[clean] || POKE_ID_MAP[name] || 1;
-        }
-
-        function getPokemonImageUrl(name) {
-            const id = getPokedexId(name);
-            return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+        function updateSprite(element, pokemonNumber) {
+            if (!element) return;
+            const N = parseInt(pokemonNumber, 10);
+            if (isNaN(N) || N <= 0) {
+                element.style.backgroundImage = 'none';
+                return;
+            }
+            element.style.backgroundImage = "url('/static/スプライトシート.png')";
+            const row = Math.floor((N - 1) / 10);
+            const col = (N - 1) % 10;
+            const posX = (col * 100) / 9;
+            const posY = (row * 100) / 9;
+            element.style.backgroundPosition = `${posX}% ${posY}%`;
         }
 
         function renderTypes(type1, type2) {
@@ -523,12 +511,8 @@
                             document.getElementById('poke-a-hp-text').textContent = `${pokeA.hp}/${pokeA.max_hp}`;
                             document.getElementById('poke-a-types').innerHTML = renderTypes(pokeA.type1, pokeA.type2);
                             
-                            // Set Pokemon Image
-                            const imgA = document.getElementById('poke-a-img');
-                            const targetUrlA = getPokemonImageUrl(pokeA.name);
-                            if (imgA.src !== targetUrlA) {
-                                imgA.src = targetUrlA;
-                            }
+                            // Set Pokemon Sprite
+                            updateSprite(document.getElementById('poke-a-sprite-inner'), pokeA.番号);
                         }
 
                         // Populate Player B details
@@ -553,15 +537,11 @@
                             document.getElementById('poke-b-hp-text').textContent = `${pokeB.hp}/${pokeB.max_hp}`;
                             document.getElementById('poke-b-types').innerHTML = renderTypes(pokeB.type1, pokeB.type2);
 
-                            // Set Pokemon Image
-                            const imgB = document.getElementById('poke-b-img');
-                            const targetUrlB = getPokemonImageUrl(pokeB.name);
-                            if (imgB.src !== targetUrlB) {
-                                imgB.src = targetUrlB;
-                            }
+                            // Set Pokemon Sprite
+                            updateSprite(document.getElementById('poke-b-sprite-inner'), pokeB.番号);
                         }
 
-                        // Highlight active targeted image
+                        // Highlight active targeted sprite
                         const isTargetA = data.target_player === 'A';
                         const isTargetB = data.target_player === 'B';
                         
