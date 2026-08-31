@@ -215,10 +215,10 @@
                     const slideIframe = document.getElementById('slide-iframe');
                     if (data.slide_url) {
                         let embedUrl = data.slide_url;
-                        if (embedUrl.includes('docs.google.com/presentation') && !embedUrl.includes('/embed')) {
-                            embedUrl = embedUrl.replace(/\/edit(\?.*)?$/, '/embed').replace(/\/pub(\?.*)?$/, '/embed');
-                            if (!embedUrl.includes('/embed')) {
-                                embedUrl = embedUrl.split('?')[0] + '/embed';
+                        if (embedUrl.includes('docs.google.com/presentation')) {
+                            const match = embedUrl.match(/\/presentation\/d\/([a-zA-Z0-9-_]+)/);
+                            if (match) {
+                                embedUrl = `https://docs.google.com/presentation/d/${match[1]}/embed`;
                             }
                         }
                         if (slideIframe.src !== embedUrl) {
