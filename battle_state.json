@@ -1,10 +1,8 @@
 {
-    "waiting_players": [
-        "test1"
-    ],
+    "waiting_players": [],
     "grading_viewers": [],
     "active_battle": {
-        "active": false,
+        "active": true,
         "player_a": "china",
         "player_b": "test1",
         "a_pokemon": [
@@ -14,7 +12,7 @@
                 "type1": "みず",
                 "type2": null,
                 "max_hp": 130,
-                "hp": 0,
+                "hp": 130,
                 "attack": 65,
                 "defense": 60,
                 "sp_attack": 110,
@@ -55,7 +53,7 @@
                 "type1": "でんき",
                 "type2": null,
                 "max_hp": 90,
-                "hp": 0,
+                "hp": 90,
                 "attack": 75,
                 "defense": 85,
                 "sp_attack": 115,
@@ -86,7 +84,7 @@
                         "category": "特殊"
                     }
                 ],
-                "item": null,
+                "item": "オボンのみ",
                 "level": 50,
                 "choice_lock": null
             }
@@ -175,7 +173,7 @@
                 "choice_lock": null
             }
         ],
-        "a_active_idx": 1,
+        "a_active_idx": 0,
         "b_active_idx": 0,
         "a_selected_move": null,
         "b_selected_move": null,
@@ -186,29 +184,10 @@
         "scores": [],
         "voted_graders": [],
         "messages": [
-            "バトル開始！ 高木 VS あ",
-            "あの キノガッサの リーフブレード！",
-            "わざ成功！シャワーズに 127 ダメージ！",
-            "こうかは　ばつぐんだ！",
-            "あの キノガッサの はっぱカッター！",
-            "しかし　わざは　しっぱいした！",
-            "あの キノガッサの インファイト！",
-            "わざ成功！シャワーズに 63 ダメージ！",
-            "シャワーズはたおれた！",
-            "2体目の デンリュウ がくりだされた！",
-            "あの キノガッサの リーフブレード！",
-            "わざ成功！デンリュウに 45 ダメージ！",
-            "もちもの”オボンのみ”が発動！自身のHPが半分を下回ったとき、自身の最大HPの3分の1を回復する。",
-            "デンリュウのHPが 30 回復した！",
-            "あの キノガッサの リーフブレード！",
-            "わざ成功！デンリュウに 45 ダメージ！",
-            "あの キノガッサの リーフブレード！",
-            "わざ成功！デンリュウに 45 ダメージ！",
-            "デンリュウはたおれた！",
-            "戦闘終了！ あ の勝利！",
-            "勝者は敗者の所持金の半分（10000円）を獲得し、両者に「ちからのもと」が2つ付与されました！"
+            "バトル開始！ 高木 VS あ"
         ],
         "last_confirmed_score": null,
-        "last_calculated_score": 100
+        "last_calculated_score": 0,
+        "slide_url": "<iframe src=\"https://1drv.ms/p/c/01fbfc780d0ba3cc/IQTUJ2Xb94YwSK3fEK9De2JAARkqtdPb0IKyDOrvrWJpc1w?em=2&amp;wdAr=1.7777777777777777\" width=\"476px\" height=\"288px\" frameborder=\"0\" title=\"PowerPoint Viewer\">これは、<a target=\"_blank\" href=\"https://office.com/webapps\">Office</a> の機能を利用した、<a target=\"_blank\" href=\"https://office.com\">Microsoft Office</a> の埋め込み型のプレゼンテーションです。</iframe>"
     }
 }
