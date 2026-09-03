@@ -176,7 +176,6 @@ function routeUserStatus(status, pokemon1, pokemon2, takenList = []) {
     if (status === 'active') {
         loadGameData().then(() => {
             showScreen(el.mainScreen);
-            initMainGame();
         });
     } else if (status === 'select_choices' || status === 'select_choices_1') {
         if (el.choiceScreenTitle) el.choiceScreenTitle.textContent = "1匹目の希望ポケモン選択";
