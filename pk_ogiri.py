@@ -19,7 +19,7 @@ def get_current_user_id():
 def check_user_id(u1, u2):
     if u1 is None or u2 is None:
         return False
-    return str(u1).strip() == str(u2).strip()
+    return str(u1).strip().lower() == str(u2).strip().lower()
 
 # --- Real-Time Battle State ---
 # Waiting queues and active state
@@ -531,10 +531,12 @@ def register():
     save_players(players)
 
     session['user_id'] = user_id
+    st_info = determine_player_status(new_row)
     return jsonify({
         "success": True,
         "user_id": user_id,
-        "message": "登録が完了しました。"
+        "message": "登録が完了しました。",
+        **st_info
     })
 
 def determine_player_status(player):
@@ -1750,8 +1752,8 @@ def confirm_score_internal(forced_score=None):
                 winner_id = active_battle[f"player_{winner_role.lower()}"]
                 loser_id = active_battle[f"player_{loser_role.lower()}"]
 
-                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id)), None)
-                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
+                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id) or check_user_id(p.get('名前'), winner_id)), None)
+                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id) or check_user_id(p.get('名前'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
                 loser_money = p_loser.get('所持金', 0) if p_loser else 0
@@ -1783,7 +1785,7 @@ def confirm_score_internal(forced_score=None):
                 active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、両者に「ちからのもと」が2つ付与されました！")
                 active_battle["active"] = False
 
-        elif attacker_poke['hp'] <= 0:
+        if active_battle.get("active") and attacker_poke['hp'] <= 0:
             active_battle["messages"].append(f"{attacker_poke['name']}はたおれた！")
             attacker_poke['choice_lock'] = None
             # Switch to 2nd pokemon if available
@@ -1800,8 +1802,8 @@ def confirm_score_internal(forced_score=None):
                 winner_id = active_battle[f"player_{winner_role.lower()}"]
                 loser_id = active_battle[f"player_{loser_role.lower()}"]
 
-                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id)), None)
-                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
+                p_winner = next((p for p in players_data if check_user_id(p.get('ユーザid'), winner_id) or check_user_id(p.get('名前'), winner_id)), None)
+                p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id) or check_user_id(p.get('名前'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
                 loser_money = p_loser.get('所持金', 0) if p_loser else 0
@@ -1829,7 +1831,7 @@ def confirm_score_internal(forced_score=None):
 
                 save_players(players_data)
 
-                def_player_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle[f"player_{defender_role.lower()}"])), "プレイヤー")
+                def_player_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle[f"player_{defender_role.lower()}"]) or check_user_id(p.get('名前'), active_battle[f"player_{defender_role.lower()}"])), "プレイヤー")
                 active_battle["messages"].append(f"戦闘終了！ {def_player_name} の勝利！")
                 active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、両者に「ちからのもと」が2つ付与されました！")
                 active_battle["active"] = False
@@ -2137,20 +2139,29 @@ def admin_battle_confirm_score():
 
 @app.route('/api/admin/battle/force_end', methods=['POST'])
 def admin_battle_force_end():
-    if active_battle.get("active"):
-        player_a_id = active_battle.get("player_a")
-        player_b_id = active_battle.get("player_b")
+    player_a_id = active_battle.get("player_a")
+    player_b_id = active_battle.get("player_b")
+
+    if player_a_id or player_b_id:
         a_raw_dmg = active_battle.get("a_damage", 0)
         b_raw_dmg = active_battle.get("b_damage", 0)
 
         players_data = get_players()
-        p_a = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a_id)), None)
-        p_b = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b_id)), None)
+        p_a = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a_id) or check_user_id(p.get('名前'), player_a_id)), None)
+        p_b = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b_id) or check_user_id(p.get('名前'), player_b_id)), None)
 
         if p_a:
             p_a['与ダメージ'] = p_a.get('与ダメージ', 0) + int(round(a_raw_dmg * 1.0))
         if p_b:
             p_b['与ダメージ'] = p_b.get('与ダメージ', 0) + int(round(b_raw_dmg * 1.0))
+
+        # Both get 2 Power Sources
+        for p in [p_a, p_b]:
+            if p:
+                owned_raw = p.get('もちもの') or ''
+                owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+                owned.extend(["ちからのもと", "ちからのもと"])
+                p['もちもの'] = ','.join(owned)
 
         save_players(players_data)
 

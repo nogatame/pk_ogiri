@@ -2,174 +2,21 @@
     "waiting_players": [],
     "grading_viewers": [],
     "active_battle": {
-        "active": true,
-        "player_a": "japan",
-        "player_b": "china",
+        "active": false,
+        "player_a": "P1",
+        "player_b": "p2",
         "a_pokemon": [
             {
-                "name": "ギャラドス",
-                "番号": 19,
-                "type1": "みず",
-                "type2": "ひこう",
-                "max_hp": 95,
-                "hp": 95,
-                "attack": 125,
-                "defense": 79,
-                "sp_attack": 60,
-                "sp_defense": 100,
-                "moves": [
-                    {
-                        "name": "アクアブレイク",
-                        "type": "みず",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "ブレイブバード",
-                        "type": "ひこう",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "じならし",
-                        "type": "じめん",
-                        "power": 36,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "はっぱカッター",
-                        "type": "くさ",
-                        "power": 16,
-                        "category": "物理"
-                    }
-                ],
-                "item": "たべのこし",
-                "level": 50,
-                "choice_lock": null
-            },
-            {
-                "name": "カビゴン",
-                "番号": 17,
-                "type1": "ノーマル",
-                "type2": null,
-                "max_hp": 163,
-                "hp": 163,
-                "attack": 110,
-                "defense": 65,
-                "sp_attack": 65,
-                "sp_defense": 110,
-                "moves": [
-                    {
-                        "name": "ギガインパクト",
-                        "type": "ノーマル",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "のしかかり",
-                        "type": "ノーマル",
-                        "power": 36,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "シャドークロー",
-                        "type": "ゴースト",
-                        "power": 36,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "はっぱカッター",
-                        "type": "くさ",
-                        "power": 16,
-                        "category": "物理"
-                    }
-                ],
-                "item": "ゴツゴツメット",
-                "level": 50,
-                "choice_lock": null
+                "name": "ピカチュウ",
+                "max_hp": 100,
+                "hp": 100
             }
         ],
         "b_pokemon": [
             {
-                "name": "デンリュウ",
-                "番号": 33,
-                "type1": "でんき",
-                "type2": null,
-                "max_hp": 90,
-                "hp": 90,
-                "attack": 75,
-                "defense": 85,
-                "sp_attack": 115,
-                "sp_defense": 90,
-                "moves": [
-                    {
-                        "name": "かみなり",
-                        "type": "でんき",
-                        "power": 54,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "10まんボルト",
-                        "type": "でんき",
-                        "power": 36,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "エナジーボール",
-                        "type": "くさ",
-                        "power": 36,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "でんきショック",
-                        "type": "でんき",
-                        "power": 16,
-                        "category": "特殊"
-                    }
-                ],
-                "item": "オボンのみ",
-                "level": 50,
-                "choice_lock": null
-            },
-            {
-                "name": "シャワーズ",
-                "番号": 28,
-                "type1": "みず",
-                "type2": null,
-                "max_hp": 130,
-                "hp": 130,
-                "attack": 65,
-                "defense": 60,
-                "sp_attack": 110,
-                "sp_defense": 95,
-                "moves": [
-                    {
-                        "name": "ハイドロカノン",
-                        "type": "みず",
-                        "power": 81,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "なみのり",
-                        "type": "みず",
-                        "power": 36,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "こごえるかぜ",
-                        "type": "こおり",
-                        "power": 16,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "みずのはどう",
-                        "type": "みず",
-                        "power": 16,
-                        "category": "特殊"
-                    }
-                ],
-                "item": "しんぴのしずく",
-                "level": 50,
+                "name": "イーブイ",
+                "max_hp": 50,
+                "hp": 0,
                 "choice_lock": null
             }
         ],
@@ -177,17 +24,20 @@
         "b_active_idx": 0,
         "a_selected_move": null,
         "b_selected_move": null,
-        "a_swapped": false,
-        "b_swapped": false,
+        "a_damage": 50,
+        "b_damage": 0,
         "swap_request": null,
         "target_player": null,
         "scores": [],
         "voted_graders": [],
         "messages": [
-            "バトル開始！ 西川 VS 高木"
+            "プレイヤーの ピカチュウの 10まんボルト！",
+            "わざ成功！イーブイに 50 ダメージ！",
+            "イーブイはたおれた！",
+            "戦闘終了！ プレイヤー の勝利！",
+            "勝者は敗者の所持金の半分（500円）を獲得し、両者に「ちからのもと」が2つ付与されました！"
         ],
         "last_confirmed_score": null,
-        "last_calculated_score": 0,
-        "slide_url": "<iframe src=\"https://1drv.ms/p/c/01fbfc780d0ba3cc/IQTUJ2Xb94YwSK3fEK9De2JAARkqtdPb0IKyDOrvrWJpc1w?em=2&amp;wdAr=1.7777777777777777\" width=\"476px\" height=\"288px\" frameborder=\"0\" title=\"PowerPoint Viewer\">これは、<a target=\"_blank\" href=\"https://office.com/webapps\">Office</a> の機能を利用した、<a target=\"_blank\" href=\"https://office.com\">Microsoft Office</a> の埋め込み型のプレゼンテーションです。</iframe>"
+        "last_calculated_score": 100
     }
 }

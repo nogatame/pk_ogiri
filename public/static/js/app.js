@@ -172,7 +172,7 @@ function showSubscreen(subscreen) {
 }
 
 // Routing
-function routeUserStatus(status, pokemon1, pokemon2) {
+function routeUserStatus(status, pokemon1, pokemon2, takenList = []) {
     if (status === 'active') {
         loadGameData().then(() => {
             showScreen(el.mainScreen);
@@ -181,7 +181,7 @@ function routeUserStatus(status, pokemon1, pokemon2) {
     } else if (status === 'select_choices' || status === 'select_choices_1') {
         if (el.choiceScreenTitle) el.choiceScreenTitle.textContent = "1匹目の希望ポケモン選択";
         if (el.choiceScreenInstruction) el.choiceScreenInstruction.textContent = "第1希望から第4希望まで、異なるポケモンを選択してください。（すべて必須入力）";
-        loadWishesOptions([]).then(() => {
+        loadWishesOptions(takenList).then(() => {
             showScreen(el.choiceScreen);
         });
     } else if (status === 'select_choices_2') {
@@ -257,7 +257,7 @@ el.loginBtn.addEventListener('click', async () => {
         if (res.ok && data.success) {
             state.userId = data.user_id;
             sessionStorage.setItem('user_id', data.user_id);
-            routeUserStatus(data.status, data.pokemon1, data.pokemon2);
+            routeUserStatus(data.status, data.pokemon1, data.pokemon2, data.taken_pokemon1_list);
         } else {
             showAuthError(data.message || "ログインに失敗しました。");
         }
@@ -294,7 +294,7 @@ el.registerBtn.addEventListener('click', async () => {
         if (res.ok && data.success) {
             state.userId = data.user_id;
             sessionStorage.setItem('user_id', data.user_id);
-            routeUserStatus('select_choices_1', null, null);
+            routeUserStatus(data.status || 'select_choices_1', data.pokemon1, data.pokemon2, data.taken_pokemon1_list);
         } else {
             showAuthError(data.message || "登録に失敗しました。");
         }
@@ -315,27 +315,37 @@ function showAuthError(msg) {
 
 async function loadWishesOptions(excludePokemons = []) {
     try {
-        const res = await fetch('/api/game_data');
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            state.allPokemons = data.all_pokemons;
-            if (data.type_chart) {
-                TYPE_CHART = data.type_chart;
+        let pokemons = [];
+        // First try public endpoint /api/all_pokemons so dropdowns work even without authentication
+        const res1 = await fetch('/api/all_pokemons');
+        const data1 = await res1.json();
+        if (res1.ok && data1.success && data1.all_pokemons && data1.all_pokemons.length > 0) {
+            pokemons = data1.all_pokemons;
+            state.allPokemons = data1.all_pokemons;
+        } else {
+            // Secondary attempt via /api/game_data
+            const res2 = await fetch('/api/game_data');
+            const data2 = await res2.json();
+            if (res2.ok && data2.success) {
+                pokemons = data2.all_pokemons;
+                state.allPokemons = data2.all_pokemons;
+                if (data2.type_chart) TYPE_CHART = data2.type_chart;
             }
-
-            el.wishSelects.forEach(select => {
-                select.innerHTML = '<option value="">選択してください</option>';
-                data.all_pokemons.forEach(poke => {
-                    if (!excludePokemons.includes(poke.name)) {
-                        const opt = document.createElement('option');
-                        opt.value = poke.name;
-                        opt.textContent = poke.name;
-                        select.appendChild(opt);
-                    }
-                });
-            });
         }
+
+        el.wishSelects.forEach(select => {
+            if (!select) return;
+            select.innerHTML = '<option value="">選択してください</option>';
+            pokemons.forEach(poke => {
+                const pokeName = typeof poke === 'string' ? poke : (poke.name || poke.名前);
+                if (pokeName && !excludePokemons.includes(pokeName)) {
+                    const opt = document.createElement('option');
+                    opt.value = pokeName;
+                    opt.textContent = pokeName;
+                    select.appendChild(opt);
+                }
+            });
+        });
     } catch (err) {
         console.error("Failed to load wishes dropdowns:", err);
     }
