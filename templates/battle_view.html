@@ -250,6 +250,17 @@
             filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45));
         }
 
+        /* Shake animation on hit for Pokemon image container */
+        .shake {
+            animation: shakeEffect 0.2s ease-in-out 2;
+        }
+
+        @keyframes shakeEffect {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
         /* Log Section with narrower width and centered */
         .bottom-log-container {
             width: 100%;
@@ -348,12 +359,66 @@
             color: #0f5132;
         }
 
+        /* Timer Box in Top-Right */
+        .battle-timer-box {
+            position: fixed;
+            top: 20px;
+            right: 25px;
+            z-index: 1000;
+            background: rgba(10, 26, 17, 0.92);
+            border: 3px solid #22c55e;
+            border-radius: 14px;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            font-family: 'x12y16pxMaruMonica', 'M PLUS 2', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .battle-timer-icon {
+            font-size: 1.4rem;
+        }
+
+        .battle-timer-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #22c55e;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .battle-timer-box.overtime {
+            border-color: #ef4444;
+            background: rgba(40, 10, 15, 0.95);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        .battle-timer-box.overtime .battle-timer-text {
+            color: #f87171;
+        }
+
+        .battle-timer-box.paused {
+            border-color: #f59e0b;
+        }
+
+        .battle-timer-box.paused .battle-timer-text {
+            color: #f59e0b;
+        }
+
         .hidden {
             display: none !important;
         }
     </style>
 </head>
 <body>
+
+    <!-- Top-Right Fixed Timer -->
+    <div id="battle-timer-box" class="battle-timer-box">
+        <span class="battle-timer-icon">⏱️</span>
+        <span id="battle-timer-text" class="battle-timer-text">05:00</span>
+    </div>
 
     <!-- Main Battle/Slide Layout Area -->
     <div class="battle-layout">
@@ -573,6 +638,25 @@
                             updateSprite(document.getElementById('poke-b-sprite-inner'), pokeB.番号);
                         }
 
+                        // Check for HP decrease to trigger shake on poke-display image only
+                        if (window.lastHpState) {
+                            if (pokeA && window.lastHpState.a > pokeA.hp) {
+                                const dispA = document.querySelector('#card-a .poke-display');
+                                if (dispA) {
+                                    dispA.classList.add('shake');
+                                    setTimeout(() => dispA.classList.remove('shake'), 200);
+                                }
+                            }
+                            if (pokeB && window.lastHpState.b > pokeB.hp) {
+                                const dispB = document.querySelector('#card-b .poke-display');
+                                if (dispB) {
+                                    dispB.classList.add('shake');
+                                    setTimeout(() => dispB.classList.remove('shake'), 200);
+                                }
+                            }
+                        }
+                        window.lastHpState = { a: pokeA ? pokeA.hp : 0, b: pokeB ? pokeB.hp : 0 };
+
                         // Highlight active targeted sprite
                         const isTargetA = data.target_player === 'A';
                         const isTargetB = data.target_player === 'B';
@@ -597,7 +681,16 @@
                         document.getElementById('grader-only-score-box').classList.add('hidden');
                     }
 
-                    // 4. Update Logs
+                    // 4. Update Timer
+                    if (data.timer) {
+                        currentTimerData = {
+                            ...data.timer,
+                            last_fetch_time: Date.now()
+                        };
+                        updateTimerDisplay();
+                    }
+
+                    // 5. Update Logs
                     const logBox = document.getElementById('battle-log');
                     logBox.innerHTML = '';
                     (data.messages || []).forEach(msg => {
@@ -611,6 +704,48 @@
                 console.error("Error updating battle status:", err);
             }
         }
+
+        let currentTimerData = { status: 'stopped', elapsed: 0, duration: 300, last_fetch_time: Date.now() };
+
+        function updateTimerDisplay() {
+            let status = currentTimerData.status;
+            let elapsed = currentTimerData.elapsed;
+            
+            if (status === 'running' && currentTimerData.last_fetch_time) {
+                const delta = (Date.now() - currentTimerData.last_fetch_time) / 1000;
+                elapsed += delta;
+            }
+
+            const duration = currentTimerData.duration || 300;
+            const remaining = duration - elapsed;
+
+            const timerBox = document.getElementById('battle-timer-box');
+            const timerText = document.getElementById('battle-timer-text');
+            if (!timerBox || !timerText) return;
+
+            if (status === 'stopped' && remaining >= duration) {
+                timerText.textContent = '05:00';
+                timerBox.className = 'battle-timer-box';
+                return;
+            }
+
+            if (remaining >= 0) {
+                const totalSec = Math.floor(remaining);
+                const m = Math.floor(totalSec / 60);
+                const s = totalSec % 60;
+                timerText.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                timerBox.className = 'battle-timer-box' + (status === 'paused' ? ' paused' : '');
+            } else {
+                // Count up mode (5 minutes elapsed)
+                const overSec = Math.floor(Math.abs(remaining));
+                const m = Math.floor(overSec / 60);
+                const s = overSec % 60;
+                timerText.textContent = `+${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                timerBox.className = 'battle-timer-box overtime' + (status === 'paused' ? ' paused' : '');
+            }
+        }
+
+        setInterval(updateTimerDisplay, 200);
 
         setInterval(updateStatus, 1500);
         updateStatus();

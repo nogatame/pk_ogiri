@@ -419,6 +419,20 @@
                 </div>
             </div>
 
+            <!-- Timer control settings -->
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 10px;">⏱️ 観戦画面タイマー設定 (5分間)</h3>
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <div style="background: #1e293b; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); font-size: 1.2rem; font-weight: bold;">
+                        時間: <span id="admin-timer-val" style="color: #22c55e;">05:00</span>
+                        <span id="admin-timer-status" style="font-size: 0.85rem; color: var(--text-muted); margin-left: 8px;">(停止中)</span>
+                    </div>
+                    <button id="timer-start-btn" class="btn" style="background-color: #10b981; padding: 8px 16px;">▶️ 開始</button>
+                    <button id="timer-pause-btn" class="btn" style="background-color: #f59e0b; padding: 8px 16px;">⏸️ 一時停止</button>
+                    <button id="timer-reset-btn" class="btn" style="background-color: #ef4444; padding: 8px 16px;">🔄 リセット</button>
+                </div>
+            </div>
+
             <div style="display: flex; gap: 20px; margin-bottom: 20px;">
                 <div style="flex: 1; background: #0f172a; padding: 15px; border-radius: 8px;">
                     <h3>⚔️ バトル待機中の参加者</h3>
@@ -443,7 +457,26 @@
             <div id="active-battle-panel" style="background: #1e293b; border: 2px solid var(--primary); border-radius: 8px; padding: 15px; margin-top: 15px; display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0; margin-bottom: 15px;">
                     <h3 style="margin: 0; color: #60a5fa;">⚡ 進行中のバトル</h3>
-                    <button id="force-end-btn" class="btn" style="background-color: var(--error);">バトルを強制終了</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="timeout-end-btn" class="btn" style="background-color: #f59e0b; font-weight: bold;">⏱️ 時間切れ終了</button>
+                        <button id="force-end-btn" class="btn" style="background-color: var(--error); font-weight: bold;">⛔ 強制終了</button>
+                    </div>
+                </div>
+
+                <!-- Chikara no Moto Exclusion Settings -->
+                <div style="margin-bottom: 15px; background: #0f172a; padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+                    <strong>🎁 ちからのもとを配布しないプレイヤー:</strong>
+                    <div style="margin-top: 8px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                        <label style="cursor: pointer; font-size: 0.95rem;">
+                            <input type="checkbox" id="no-chikara-a" value="A"> Aのプレイヤー
+                        </label>
+                        <label style="cursor: pointer; font-size: 0.95rem;">
+                            <input type="checkbox" id="no-chikara-b" value="B"> Bのプレイヤー
+                        </label>
+                        <label style="cursor: pointer; font-size: 0.95rem;">
+                            <input type="checkbox" id="no-chikara-none" value="None" checked> 選択なし
+                        </label>
+                    </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                     <div id="p-a-panel" style="flex: 1; padding: 10px; border-right: 1px solid var(--border);">
@@ -526,6 +559,40 @@
                     const slideInput = document.getElementById('slide-url-input');
                     if (document.activeElement !== slideInput) {
                         slideInput.value = data.active_battle.slide_url || '';
+                    }
+
+                    // Update Timer view in Admin
+                    if (data.timer) {
+                        const t = data.timer;
+                        const timerValEl = document.getElementById('admin-timer-val');
+                        const timerStatusEl = document.getElementById('admin-timer-status');
+                        
+                        let remaining = t.remaining;
+                        let statusText = '(停止中)';
+                        if (t.status === 'running') statusText = '(計測中)';
+                        else if (t.status === 'paused') statusText = '(一時停止)';
+
+                        if (remaining >= 0) {
+                            const totalSec = Math.floor(remaining);
+                            const m = Math.floor(totalSec / 60);
+                            const s = totalSec % 60;
+                            if (timerValEl) {
+                                timerValEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                                timerValEl.style.color = t.status === 'paused' ? '#f59e0b' : '#22c55e';
+                            }
+                        } else {
+                            const overSec = Math.floor(Math.abs(remaining));
+                            const m = Math.floor(overSec / 60);
+                            const s = overSec % 60;
+                            if (timerValEl) {
+                                timerValEl.textContent = `+${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                                timerValEl.style.color = '#f87171';
+                            }
+                            statusText += ' [5分超過/カウントアップ]';
+                        }
+                        if (timerStatusEl) {
+                            timerStatusEl.textContent = statusText;
+                        }
                     }
 
                     // Update waiting list
@@ -656,6 +723,17 @@
                             radioB.parentElement.style.opacity = hasMoveB ? '1' : '0.5';
                             radioB.parentElement.style.cursor = hasMoveB ? 'pointer' : 'not-allowed';
                         }
+
+                        // Synchronize Chikara no Moto exclusion checkboxes if not currently focused
+                        const cbA_el = document.getElementById('no-chikara-a');
+                        const cbB_el = document.getElementById('no-chikara-b');
+                        const cbNone_el = document.getElementById('no-chikara-none');
+                        if (cbA_el && cbB_el && cbNone_el && document.activeElement !== cbA_el && document.activeElement !== cbB_el && document.activeElement !== cbNone_el) {
+                            const excludeList = b.exclude_chikara || [];
+                            cbA_el.checked = excludeList.includes("A");
+                            cbB_el.checked = excludeList.includes("B");
+                            cbNone_el.checked = (!cbA_el.checked && !cbB_el.checked);
+                        }
                     } else {
                         activePanel.style.display = 'none';
                     }
@@ -664,6 +742,31 @@
                 console.error("Error fetching battle admin status:", err);
             }
         }
+
+        // Timer control handlers
+        async function controlTimer(action) {
+            try {
+                const response = await fetch('/api/admin/timer/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+                const resData = await response.json();
+                if (resData.success) {
+                    showToast(resData.message);
+                    fetchBattleStatus();
+                } else {
+                    showToast(resData.message || 'タイマー操作エラー', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        }
+
+        document.getElementById('timer-start-btn').addEventListener('click', () => controlTimer('start'));
+        document.getElementById('timer-pause-btn').addEventListener('click', () => controlTimer('pause'));
+        document.getElementById('timer-reset-btn').addEventListener('click', () => controlTimer('reset'));
 
         // Slide URL handlers
         document.getElementById('save-slide-url-btn').addEventListener('click', async () => {
@@ -773,9 +876,97 @@
             });
         });
 
+        // --- Chikara no Moto Exclusion Checkbox handlers ---
+        const cbA = document.getElementById('no-chikara-a');
+        const cbB = document.getElementById('no-chikara-b');
+        const cbNone = document.getElementById('no-chikara-none');
+
+        function getExcludeChikaraList() {
+            const list = [];
+            if (cbA && cbA.checked) list.push("A");
+            if (cbB && cbB.checked) list.push("B");
+            return list;
+        }
+
+        async function syncChikaraExcludeToServer() {
+            const list = getExcludeChikaraList();
+            try {
+                await fetch('/api/admin/battle/update_chikara_exclude', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exclude_chikara: list })
+                });
+            } catch (err) {
+                console.error("Error syncing chikara exclude:", err);
+            }
+        }
+
+        if (cbNone && cbA && cbB) {
+            cbNone.addEventListener('change', () => {
+                if (cbNone.checked) {
+                    cbA.checked = false;
+                    cbB.checked = false;
+                } else {
+                    if (!cbA.checked && !cbB.checked) {
+                        cbNone.checked = true;
+                    }
+                }
+                syncChikaraExcludeToServer();
+            });
+
+            cbA.addEventListener('change', () => {
+                if (cbA.checked) {
+                    cbNone.checked = false;
+                } else {
+                    if (!cbB.checked) {
+                        cbNone.checked = true;
+                    }
+                }
+                syncChikaraExcludeToServer();
+            });
+
+            cbB.addEventListener('change', () => {
+                if (cbB.checked) {
+                    cbNone.checked = false;
+                } else {
+                    if (!cbA.checked) {
+                        cbNone.checked = true;
+                    }
+                }
+                syncChikaraExcludeToServer();
+            });
+        }
+
+        // Time-out end battle btn
+        const timeoutEndBtn = document.getElementById('timeout-end-btn');
+        if (timeoutEndBtn) {
+            timeoutEndBtn.addEventListener('click', async () => {
+                if (!confirm('時間切れでバトルを終了しますか？\n（勝敗判定を行い、所持金の移動および設定に応じた「ちからのもと」の配布が行われます）')) {
+                    return;
+                }
+                const excludeList = getExcludeChikaraList();
+                try {
+                    const response = await fetch('/api/admin/battle/timeout_end', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ exclude_chikara: excludeList })
+                    });
+                    const resData = await response.json();
+                    if (resData.success) {
+                        showToast(resData.message);
+                        fetchBattleStatus();
+                    } else {
+                        showToast(resData.message || 'エラーが発生しました。', false);
+                    }
+                } catch (err) {
+                    showToast('通信エラーが発生しました。', false);
+                }
+            });
+        }
+
         // Force end battle btn
         document.getElementById('force-end-btn').addEventListener('click', async () => {
-            if (!confirm('本当にバトルを強制終了しますか？')) {
+            if (!confirm('本当にバトルを強制終了しますか？\n（所持金の移動や「ちからのもと」の配布は一切行われません）')) {
                 return;
             }
             try {

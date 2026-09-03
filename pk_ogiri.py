@@ -12,8 +12,14 @@ app.secret_key = 'pk_ogiri_secret_key_13579'
 
 def get_current_user_id():
     user_id = request.headers.get('X-User-Id')
-    if user_id:
-        return user_id.strip()
+    if user_id and str(user_id).strip():
+        return str(user_id).strip()
+    if 'user_id' in session and str(session['user_id']).strip():
+        return str(session['user_id']).strip()
+    if request.is_json and request.json and request.json.get('user_id'):
+        return str(request.json.get('user_id')).strip()
+    if request.args and request.args.get('user_id'):
+        return str(request.args.get('user_id')).strip()
     return None
 
 def check_user_id(u1, u2):
@@ -47,8 +53,43 @@ active_battle = {
     "voted_graders": [],   # List of user_ids who have already graded in this round
     "messages": [],        # History of battle log messages
     "last_confirmed_score": None,
-    "last_calculated_score": 0
+    "last_calculated_score": 0,
+    "exclude_chikara": [], # List of roles to exclude from receiving Chikara no Moto: e.g. ["A"], ["B"], ["A", "B"]
+    "timer": {
+        "status": "stopped",
+        "start_timestamp": None,
+        "elapsed_seconds": 0,
+        "duration": 300
+    }
 }
+
+def get_timer_info():
+    timer_data = active_battle.get("timer")
+    if not isinstance(timer_data, dict):
+        timer_data = {
+            "status": "stopped",
+            "start_timestamp": None,
+            "elapsed_seconds": 0,
+            "duration": 300
+        }
+    status = timer_data.get("status", "stopped")
+    elapsed = float(timer_data.get("elapsed_seconds", 0))
+    start_ts = timer_data.get("start_timestamp")
+    
+    if status == "running" and start_ts:
+        import time
+        elapsed += (time.time() - start_ts)
+        
+    duration = float(timer_data.get("duration", 300))
+    remaining = duration - elapsed
+    
+    return {
+        "status": status,
+        "elapsed": elapsed,
+        "remaining": remaining,
+        "duration": duration,
+        "start_timestamp": start_ts
+    }
 
 BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
 
@@ -375,6 +416,28 @@ def convert_player_format(player):
     return modified
 
 def load_players():
+    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            res = requests.post(url, headers=headers, json=["GET", "players_data"])
+            if res.status_code == 200:
+                result = res.json().get('result')
+                if result:
+                    data = json.loads(result)
+                    modified = False
+                    for p in data:
+                        if convert_player_format(p):
+                            modified = True
+                    if modified:
+                        save_players(data)
+                    return data
+        except Exception as e:
+            print(f"Failed to load players from Vercel KV: {e}")
+
+    # 2. Fallback to local JSON file
     if not os.path.exists(PLAYERS_JSON_PATH):
         try:
             wb = get_workbook()
@@ -406,6 +469,26 @@ def load_players():
             return []
 
 def save_players(players_data):
+    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            data_str = json.dumps(players_data, ensure_ascii=False)
+            res = requests.post(url, headers=headers, json=["SET", "players_data", data_str])
+            if res.status_code == 200:
+                # Also try saving to local file if writable
+                try:
+                    with open(PLAYERS_JSON_PATH, 'w', encoding='utf-8') as f:
+                        f.write(data_str)
+                except Exception:
+                    pass
+                return
+        except Exception as e:
+            print(f"Failed to save players to Vercel KV: {e}")
+
+    # 2. Fallback to local JSON file
     try:
         with open(PLAYERS_JSON_PATH, 'w', encoding='utf-8') as f:
             json.dump(players_data, f, ensure_ascii=False, indent=4)
@@ -621,7 +704,7 @@ def submit_choices():
 
     found_player = None
     for p in players:
-        if check_user_id(p.get('ユーザid'), user_id):
+        if check_user_id(p.get('ユーザid'), user_id) or check_user_id(p.get('名前'), user_id):
             found_player = p
             break
 
@@ -659,7 +742,7 @@ def get_status():
 
     player = None
     for p in players:
-        if check_user_id(p.get('ユーザid'), user_id):
+        if check_user_id(p.get('ユーザid'), user_id) or check_user_id(p.get('名前'), user_id):
             player = p
             break
 
@@ -701,7 +784,7 @@ def game_data():
 
     player = None
     for p in players:
-        if check_user_id(p.get('ユーザid'), user_id):
+        if check_user_id(p.get('ユーザid'), user_id) or check_user_id(p.get('名前'), user_id):
             player = p
             break
 
@@ -1111,6 +1194,18 @@ def export_damage_csv():
     for p in players:
         name = p.get('名前') or p.get('ユーザid') or ''
         dmg = p.get('与ダメージ', 0)
+
+        # Include ongoing active battle damage if a battle is currently in progress
+        if active_battle.get("active"):
+            pid = p.get('ユーザid')
+            pname = p.get('名前')
+            p_a = active_battle.get("player_a")
+            p_b = active_battle.get("player_b")
+            if (p_a and (check_user_id(pid, p_a) or check_user_id(pname, p_a))):
+                dmg += active_battle.get("a_damage", 0)
+            elif (p_b and (check_user_id(pid, p_b) or check_user_id(pname, p_b))):
+                dmg += active_battle.get("b_damage", 0)
+
         writer.writerow([name, dmg])
         
     response = Response(output.getvalue(), mimetype='text/csv; charset=utf-8-sig')
@@ -1546,6 +1641,53 @@ def grader_leave():
     return jsonify({"success": True, "message": "採点画面を離れました。"})
 
 
+def distribute_chikara_no_moto(players_data, active_battle):
+    exclude_list = active_battle.get("exclude_chikara", [])
+    player_a_id = active_battle.get("player_a")
+    player_b_id = active_battle.get("player_b")
+
+    p_a = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a_id) or check_user_id(p.get('名前'), player_a_id)), None)
+    p_b = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b_id) or check_user_id(p.get('名前'), player_b_id)), None)
+
+    awarded_names = []
+    if "A" not in exclude_list and p_a:
+        owned_raw = p_a.get('もちもの') or ''
+        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+        owned.extend(["ちからのもと", "ちからのもと"])
+        p_a['もちもの'] = ','.join(owned)
+        awarded_names.append(p_a.get('名前', 'プレイヤーA'))
+
+    if "B" not in exclude_list and p_b:
+        owned_raw = p_b.get('もちもの') or ''
+        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+        owned.extend(["ちからのもと", "ちからのもと"])
+        p_b['もちもの'] = ','.join(owned)
+        awarded_names.append(p_b.get('名前', 'プレイヤーB'))
+
+    return awarded_names
+
+def reset_active_battle_data():
+    active_battle["active"] = False
+    active_battle["player_a"] = None
+    active_battle["player_b"] = None
+    active_battle["a_pokemon"] = []
+    active_battle["b_pokemon"] = []
+    active_battle["a_active_idx"] = 0
+    active_battle["b_active_idx"] = 0
+    active_battle["a_selected_move"] = None
+    active_battle["b_selected_move"] = None
+    active_battle["a_damage"] = 0
+    active_battle["b_damage"] = 0
+    active_battle["a_swapped"] = False
+    active_battle["b_swapped"] = False
+    active_battle["swap_request"] = None
+    active_battle["target_player"] = None
+    active_battle["scores"] = []
+    active_battle["voted_graders"] = []
+    active_battle["last_calculated_score"] = 0
+    active_battle["last_confirmed_score"] = None
+    active_battle["exclude_chikara"] = []
+
 def confirm_score_internal(forced_score=None):
     if not active_battle["active"]:
         return False, "アクティブなバトルはありません。"
@@ -1763,13 +1905,8 @@ def confirm_score_internal(forced_score=None):
                 if p_winner:
                     p_winner['所持金'] = p_winner.get('所持金', 0) + prize
 
-                # Both get 2 Power Sources
-                for p in [p_winner, p_loser]:
-                    if p:
-                        owned_raw = p.get('もちもの') or ''
-                        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-                        owned.extend(["ちからのもと", "ちからのもと"])
-                        p['もちもの'] = ','.join(owned)
+                # Both get Power Sources according to exclude settings
+                awarded_names = distribute_chikara_no_moto(players_data, active_battle)
 
                 # Damage calculation: Winner 1.5x, Loser 0.5x
                 winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
@@ -1781,8 +1918,15 @@ def confirm_score_internal(forced_score=None):
 
                 save_players(players_data)
 
+                if len(awarded_names) == 2:
+                    item_msg = "両者に「ちからのもと」が2つ付与されました！"
+                elif len(awarded_names) == 1:
+                    item_msg = f"{awarded_names[0]}に「ちからのもと」が2つ付与されました！"
+                else:
+                    item_msg = "ちからのもとの配布はありません。"
+
                 active_battle["messages"].append(f"戦闘終了！ {att_player_name} の勝利！")
-                active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、両者に「ちからのもと」が2つ付与されました！")
+                active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、{item_msg}")
                 active_battle["active"] = False
 
         if active_battle.get("active") and attacker_poke['hp'] <= 0:
@@ -1813,13 +1957,8 @@ def confirm_score_internal(forced_score=None):
                 if p_winner:
                     p_winner['所持金'] = p_winner.get('所持金', 0) + prize
 
-                # Both get 2 Power Sources
-                for p in [p_winner, p_loser]:
-                    if p:
-                        owned_raw = p.get('もちもの') or ''
-                        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-                        owned.extend(["ちからのもと", "ちからのもと"])
-                        p['もちもの'] = ','.join(owned)
+                # Both get Power Sources according to exclude settings
+                awarded_names = distribute_chikara_no_moto(players_data, active_battle)
 
                 # Damage calculation: Winner 1.5x, Loser 0.5x
                 winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
@@ -1831,9 +1970,16 @@ def confirm_score_internal(forced_score=None):
 
                 save_players(players_data)
 
+                if len(awarded_names) == 2:
+                    item_msg = "両者に「ちからのもと」が2つ付与されました！"
+                elif len(awarded_names) == 1:
+                    item_msg = f"{awarded_names[0]}に「ちからのもと」が2つ付与されました！"
+                else:
+                    item_msg = "ちからのもとの配布はありません。"
+
                 def_player_name = next((p.get('名前') for p in players_data if check_user_id(p.get('ユーザid'), active_battle[f"player_{defender_role.lower()}"]) or check_user_id(p.get('名前'), active_battle[f"player_{defender_role.lower()}"])), "プレイヤー")
                 active_battle["messages"].append(f"戦闘終了！ {def_player_name} の勝利！")
-                active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、両者に「ちからのもと」が2つ付与されました！")
+                active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、{item_msg}")
                 active_battle["active"] = False
     else:
         active_battle["messages"].append("しかし　わざは　しっぱいした！")
@@ -1928,8 +2074,51 @@ def admin_battle_status():
         "graders": grader_list,
         "active_battle": active_battle,
         "players_details": players_details,
-        "current_score": calculate_score(active_battle["scores"]) if len(active_battle["scores"]) >= 6 else active_battle.get("last_calculated_score", 0)
+        "current_score": calculate_score(active_battle["scores"]) if len(active_battle["scores"]) >= 6 else active_battle.get("last_calculated_score", 0),
+        "timer": get_timer_info()
     })
+
+
+@app.route('/api/admin/timer/control', methods=['POST'])
+def admin_timer_control():
+    data = request.json or {}
+    action = data.get('action') # 'start', 'pause', 'reset'
+
+    if "timer" not in active_battle or not isinstance(active_battle["timer"], dict):
+        active_battle["timer"] = {
+            "status": "stopped",
+            "start_timestamp": None,
+            "elapsed_seconds": 0,
+            "duration": 300
+        }
+
+    timer = active_battle["timer"]
+    import time
+
+    if action == 'start':
+        if timer.get('status') != 'running':
+            timer['status'] = 'running'
+            timer['start_timestamp'] = time.time()
+            save_battle_state()
+        return jsonify({"success": True, "message": "タイマーを開始しました。", "timer": get_timer_info()})
+
+    elif action == 'pause':
+        if timer.get('status') == 'running':
+            if timer.get('start_timestamp'):
+                timer['elapsed_seconds'] = float(timer.get('elapsed_seconds', 0)) + (time.time() - timer['start_timestamp'])
+            timer['status'] = 'paused'
+            timer['start_timestamp'] = None
+            save_battle_state()
+        return jsonify({"success": True, "message": "タイマーを一時停止しました。", "timer": get_timer_info()})
+
+    elif action == 'reset':
+        timer['status'] = 'stopped'
+        timer['start_timestamp'] = None
+        timer['elapsed_seconds'] = 0
+        save_battle_state()
+        return jsonify({"success": True, "message": "タイマーをリセットしました。", "timer": get_timer_info()})
+
+    return jsonify({"success": False, "message": "無効なアクションです。"}), 400
 
 
 @app.route('/api/admin/battle/set_slide', methods=['POST'])
@@ -2040,7 +2229,8 @@ def admin_battle_start():
         "voted_graders": [],
         "messages": [f"バトル開始！ {p_a_data.get('名前')} VS {p_b_data.get('名前')}"],
         "last_confirmed_score": None,
-        "last_calculated_score": 0
+        "last_calculated_score": 0,
+        "exclude_chikara": []
     })
 
     # Remove from waiting queues
@@ -2137,6 +2327,101 @@ def admin_battle_confirm_score():
     return jsonify({"success": True, "message": msg})
 
 
+@app.route('/api/admin/battle/update_chikara_exclude', methods=['POST'])
+def update_chikara_exclude():
+    req_data = request.json or {}
+    exclude_list = req_data.get('exclude_chikara', [])
+    active_battle['exclude_chikara'] = exclude_list
+    save_battle_state()
+    return jsonify({"success": True, "exclude_chikara": exclude_list})
+
+
+@app.route('/api/admin/battle/timeout_end', methods=['POST'])
+def admin_battle_timeout_end():
+    if not active_battle.get("active"):
+        return jsonify({"success": False, "message": "進行中のバトルがありません。"}), 400
+
+    player_a_id = active_battle.get("player_a")
+    player_b_id = active_battle.get("player_b")
+
+    if not player_a_id or not player_b_id:
+        return jsonify({"success": False, "message": "プレイヤー情報が不足しています。"}), 400
+
+    req_data = request.json or {}
+    if 'exclude_chikara' in req_data:
+        active_battle['exclude_chikara'] = req_data['exclude_chikara']
+
+    players_data = get_players()
+    p_a = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a_id) or check_user_id(p.get('名前'), player_a_id)), None)
+    p_b = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b_id) or check_user_id(p.get('名前'), player_b_id)), None)
+
+    # Determine Winner by remaining HP % / remaining HP, then damage
+    a_pokes = active_battle.get('a_pokemon', [])
+    b_pokes = active_battle.get('b_pokemon', [])
+
+    a_hp = sum(max(0, p.get('hp', 0)) for p in a_pokes)
+    a_max = sum(max(1, p.get('max_hp', 1)) for p in a_pokes)
+    b_hp = sum(max(0, p.get('hp', 0)) for p in b_pokes)
+    b_max = sum(max(1, p.get('max_hp', 1)) for p in b_pokes)
+
+    a_pct = (a_hp / a_max) if a_max > 0 else 0
+    b_pct = (b_hp / b_max) if b_max > 0 else 0
+
+    a_raw_dmg = active_battle.get("a_damage", 0)
+    b_raw_dmg = active_battle.get("b_damage", 0)
+
+    if a_pct > b_pct:
+        winner_role, loser_role = "A", "B"
+    elif b_pct > a_pct:
+        winner_role, loser_role = "B", "A"
+    else:
+        if a_raw_dmg >= b_raw_dmg:
+            winner_role, loser_role = "A", "B"
+        else:
+            winner_role, loser_role = "B", "A"
+
+    p_winner = p_a if winner_role == "A" else p_b
+    p_loser = p_b if winner_role == "A" else p_a
+    winner_name = p_winner.get('名前', f'プレイヤー{winner_role}') if p_winner else f'プレイヤー{winner_role}'
+
+    # 1. Money transfer: winner gets half of loser's money
+    loser_money = p_loser.get('所持金', 0) if p_loser else 0
+    prize = loser_money // 2
+    if p_loser:
+        p_loser['所持金'] = loser_money - prize
+    if p_winner:
+        p_winner['所持金'] = p_winner.get('所持金', 0) + prize
+
+    # 2. Chikara no Moto distribution according to exclude_chikara
+    awarded_names = distribute_chikara_no_moto(players_data, active_battle)
+
+    # 3. Damage stats (Winner 1.5x, Loser 0.5x)
+    winner_raw_dmg = a_raw_dmg if winner_role == "A" else b_raw_dmg
+    loser_raw_dmg = b_raw_dmg if winner_role == "A" else a_raw_dmg
+    if p_winner:
+        p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.5))
+    if p_loser:
+        p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.5))
+
+    save_players(players_data)
+
+    # 4. Message log & Battle state reset
+    if len(awarded_names) == 2:
+        item_msg = "両者に「ちからのもと」が2つ付与されました。"
+    elif len(awarded_names) == 1:
+        item_msg = f"{awarded_names[0]}に「ちからのもと」が2つ付与されました。"
+    else:
+        item_msg = "ちからのもとの配布はありません。"
+
+    active_battle["messages"].append(f"時間切れにより戦闘終了！ {winner_name} の判定勝ち！")
+    active_battle["messages"].append(f"勝者は敗者の所持金の半分（{prize}円）を獲得し、{item_msg}")
+
+    # Reset active battle state
+    reset_active_battle_data()
+    save_battle_state()
+    return jsonify({"success": True, "message": f"時間切れ終了を処理しました。（勝者: {winner_name}）"})
+
+
 @app.route('/api/admin/battle/force_end', methods=['POST'])
 def admin_battle_force_end():
     player_a_id = active_battle.get("player_a")
@@ -2155,32 +2440,11 @@ def admin_battle_force_end():
         if p_b:
             p_b['与ダメージ'] = p_b.get('与ダメージ', 0) + int(round(b_raw_dmg * 1.0))
 
-        # Both get 2 Power Sources
-        for p in [p_a, p_b]:
-            if p:
-                owned_raw = p.get('もちもの') or ''
-                owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-                owned.extend(["ちからのもと", "ちからのもと"])
-                p['もちもの'] = ','.join(owned)
-
+        # NO money transfer and NO Chikara no Moto distribution!
         save_players(players_data)
 
-    active_battle["active"] = False
-    active_battle["player_a"] = None
-    active_battle["player_b"] = None
-    active_battle["a_pokemon"] = []
-    active_battle["b_pokemon"] = []
-    active_battle["a_selected_move"] = None
-    active_battle["b_selected_move"] = None
-    active_battle["a_damage"] = 0
-    active_battle["b_damage"] = 0
-    active_battle["swap_request"] = None
-    active_battle["target_player"] = None
-    active_battle["scores"] = []
-    active_battle["voted_graders"] = []
-    active_battle["last_calculated_score"] = 0
-    active_battle["messages"].append("管理者によってバトルが強制終了されました。")
-    save_battle_state()
+    active_battle["messages"].append("管理者によってバトルが強制終了されました。（所持金の移動およびちからのもとの配布はありません）")
+    reset_active_battle_data()
     return jsonify({"success": True, "message": "バトルを強制終了しました。"})
 
 
@@ -2251,7 +2515,8 @@ def battle_viewer_status():
         "scores": active_battle["scores"],
         "score_count": len(active_battle["scores"]),
         "messages": active_battle["messages"],
-        "slide_url": active_battle.get("slide_url")
+        "slide_url": active_battle.get("slide_url"),
+        "timer": get_timer_info()
     }
 
     if active_battle["active"]:

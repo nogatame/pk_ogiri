@@ -1,8 +1,8 @@
 // Type chart loaded dynamically from JSON
 let TYPE_CHART = {};
 
-// Set API base URL dynamically based on the current page origin
-const API_BASE_URL = window.location.origin;
+// Set API base URL dynamically (supports Vercel env override or current page origin)
+const API_BASE_URL = window.ENV_API_BASE_URL || window.location.origin;
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
@@ -384,7 +384,7 @@ el.submitWishesBtn.addEventListener('click', async () => {
         const res = await fetch('/api/submit_choices', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ choices: choices })
+            body: JSON.stringify({ choices: choices, user_id: state.userId || sessionStorage.getItem('user_id') })
         });
         const data = await res.json();
 
@@ -1050,11 +1050,13 @@ el.movesPanel.addEventListener('click', async (e) => {
         showBattleMessage("こうかがない　ようだ…");
     }
 
-    // Add visual hit effect to enemy card
-    el.enemyBattleCard.classList.add('shake');
-    setTimeout(() => {
-        el.enemyBattleCard.classList.remove('shake');
-    }, 200);
+    // Add visual hit effect to enemy image sprite only (not the card box)
+    if (el.enemySprite) {
+        el.enemySprite.classList.add('shake');
+        setTimeout(() => {
+            el.enemySprite.classList.remove('shake');
+        }, 200);
+    }
 
     // Update HP values and bars in the UI
     updateBattleUI();
@@ -2237,6 +2239,25 @@ function updateBattlePlayerArena(data) {
     document.getElementById('p-opp-types').textContent = [oppPoke.type1, oppPoke.type2].filter(t => t).join('/');
     setPokemonSprite(document.getElementById('p-opp-sprite'), oppPoke.番号, oppPoke.name);
     updateMatchupDisplay(oppPoke, 'p-opp-matchup-effective', 'p-opp-matchup-ineffective');
+
+    // Track HP changes to shake Pokemon image only when damaged
+    if (state.lastPlayerArenaHp) {
+        if (oppPoke.hp < state.lastPlayerArenaHp.oppHp) {
+            const oppSpriteEl = document.getElementById('p-opp-sprite');
+            if (oppSpriteEl) {
+                oppSpriteEl.classList.add('shake');
+                setTimeout(() => oppSpriteEl.classList.remove('shake'), 200);
+            }
+        }
+        if (myPoke.hp < state.lastPlayerArenaHp.myHp) {
+            const mySpriteEl = document.getElementById('p-my-sprite');
+            if (mySpriteEl) {
+                mySpriteEl.classList.add('shake');
+                setTimeout(() => mySpriteEl.classList.remove('shake'), 200);
+            }
+        }
+    }
+    state.lastPlayerArenaHp = { myHp: myPoke.hp, oppHp: oppPoke.hp };
 
     // Update moves buttons
     for (let i = 0; i < 4; i++) {
