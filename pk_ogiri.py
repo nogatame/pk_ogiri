@@ -519,8 +519,7 @@ def register():
         '希望1': None,
         '希望2': None,
         '希望3': None,
-        '希望4': None,
-        '希望5': None
+        '希望4': None
     }
     # Update and save to JSON file
     players.append(new_row)
@@ -532,6 +531,32 @@ def register():
         "user_id": user_id,
         "message": "登録が完了しました。"
     })
+
+def determine_player_status(player):
+    p_list = player.get('ポケモン', [])
+    pokemon1 = p_list[0].get('名前') if len(p_list) > 0 else None
+    pokemon2 = p_list[1].get('名前') if len(p_list) > 1 else None
+    wish1 = player.get('希望1')
+
+    if len(p_list) >= 2:
+        status = "active"
+        step = 2
+    elif len(p_list) == 1:
+        step = 2
+        status = "waiting_2" if wish1 else "select_choices_2"
+    else:
+        step = 1
+        status = "waiting_1" if wish1 else "select_choices_1"
+
+    wishes = [player.get(f'希望{i}') for i in range(1, 5)]
+
+    return {
+        "status": status,
+        "step": step,
+        "pokemon1": pokemon1,
+        "pokemon2": pokemon2,
+        "wishes": wishes
+    }
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -554,25 +579,12 @@ def login():
 
     session['user_id'] = user_id
     
-    # Determine status
-    p_list = player.get('ポケモン', [])
-    pokemon1 = p_list[0].get('名前') if len(p_list) > 0 else None
-    pokemon2 = p_list[1].get('名前') if len(p_list) > 1 else None
-    wish1 = player.get('希望1')
-
-    if pokemon1 and pokemon2:
-        status = "active"
-    elif wish1:
-        status = "waiting"
-    else:
-        status = "select_choices"
+    st_info = determine_player_status(player)
 
     return jsonify({
         "success": True,
         "user_id": user_id,
-        "status": status,
-        "pokemon1": pokemon1,
-        "pokemon2": pokemon2
+        **st_info
     })
 
 @app.route('/api/submit_choices', methods=['POST'])
@@ -584,25 +596,40 @@ def submit_choices():
     data = request.json or {}
     choices = data.get('choices', [])
 
-    if len(choices) != 5 or len(set(choices)) != 5:
-        return jsonify({"success": False, "message": "重複のない5体のポケモンを選択してください。"}), 400
+    if len(choices) != 4 or len(set(choices)) != 4:
+        return jsonify({"success": False, "message": "重複のない4体のポケモンを選択してください。"}), 400
 
     players = get_players()
 
-    found = False
+    found_player = None
     for p in players:
         if check_user_id(p.get('ユーザid'), user_id):
-            for i, choice in enumerate(choices):
-                p[f'希望{i+1}'] = choice
-            found = True
+            found_player = p
             break
 
-    if not found:
+    if not found_player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
+
+    p_list = found_player.get('ポケモン', [])
+    if len(p_list) >= 2:
+        return jsonify({"success": False, "message": "すでに2体のポケモンを入手しています。"}), 400
+
+    existing_poke_names = [pk.get('名前') for pk in p_list]
+    for c in choices:
+        if c in existing_poke_names:
+            return jsonify({"success": False, "message": f"所持済みのポケモン ({c}) は希望に選択できません。"}), 400
+
+    for i, choice in enumerate(choices):
+        found_player[f'希望{i+1}'] = choice
 
     save_players(players)
 
-    return jsonify({"success": True, "status": "waiting"})
+    st_info = determine_player_status(found_player)
+
+    return jsonify({
+        "success": True,
+        **st_info
+    })
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
@@ -621,23 +648,11 @@ def get_status():
     if not player:
         return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
 
-    p_list = player.get('ポケモン', [])
-    pokemon1 = p_list[0].get('名前') if len(p_list) > 0 else None
-    pokemon2 = p_list[1].get('名前') if len(p_list) > 1 else None
-    wish1 = player.get('希望1')
-
-    if pokemon1 and pokemon2:
-        status = "active"
-    elif wish1:
-        status = "waiting"
-    else:
-        status = "select_choices"
+    st_info = determine_player_status(player)
 
     return jsonify({
         "success": True,
-        "status": status,
-        "pokemon1": pokemon1,
-        "pokemon2": pokemon2
+        **st_info
     })
 
 @app.route('/api/game_data', methods=['GET'])
@@ -939,12 +954,15 @@ def admin_pending():
         p_list = p.get('ポケモン', [])
         p1 = p_list[0].get('名前') if len(p_list) > 0 else None
         p2 = p_list[1].get('名前') if len(p_list) > 1 else None
-        # pending if they have wishes but don't have pokemon1 or pokemon2 assigned
-        if p.get('希望1') and (not p1 or not p2):
+        wish1 = p.get('希望1')
+        
+        if wish1 and len(p_list) < 2:
+            step = len(p_list) + 1 # 1st or 2nd pokemon decision
             pending.append({
                 "user_id": p.get('ユーザid'),
                 "name": p.get('名前'),
-                "wishes": [p.get(f'希望{i}') for i in range(1, 6)],
+                "step": step,
+                "wishes": [p.get(f'希望{i}') for i in range(1, 5)],
                 "pokemon1": p1,
                 "pokemon2": p2
             })
@@ -958,11 +976,10 @@ def admin_pending():
 def admin_approve():
     data = request.json or {}
     user_id = data.get('user_id', '').strip()
-    pokemon1 = data.get('pokemon1', '').strip()
-    pokemon2 = data.get('pokemon2', '').strip()
+    pokemon = data.get('pokemon', '').strip() or data.get('pokemon1', '').strip()
 
-    if not user_id or not pokemon1 or not pokemon2:
-        return jsonify({"success": False, "message": "ユーザーID、ポケモン1、ポケモン2を指定してください。"}), 400
+    if not user_id or not pokemon:
+        return jsonify({"success": False, "message": "ユーザーID、割当ポケモンを指定してください。"}), 400
 
     pokemon_list = get_pokemon_list()
     players = get_players()
@@ -970,25 +987,36 @@ def admin_approve():
     found = False
     for p in players:
         if check_user_id(p.get('ユーザid'), user_id):
-            p['ポケモン'] = []
-            for poke_name in [pokemon1, pokemon2]:
-                default_moves = []
-                master_poke = next((pk for pk in pokemon_list if pk.get('名前') == poke_name), None)
-                if master_poke:
-                    for zn in ["１", "２", "３", "４", "５"]:
-                        m_name = master_poke.get(f'わざ{zn}')
-                        if m_name:
-                            default_moves.append(str(m_name).strip())
-                default_moves = default_moves[:4]
-                while len(default_moves) < 4:
-                    default_moves.append("-")
-                
-                p['ポケモン'].append({
-                    "名前": poke_name,
-                    "レベル": 50,
-                    "もちもの": None,
-                    "わざ": default_moves
-                })
+            p_list = p.get('ポケモン', [])
+            if len(p_list) >= 2:
+                return jsonify({"success": False, "message": "このユーザーは既に2体のポケモンを割り当てられています。"}), 400
+            
+            default_moves = []
+            master_poke = next((pk for pk in pokemon_list if pk.get('名前') == pokemon), None)
+            if master_poke:
+                for zn in ["１", "２", "３", "４", "５"]:
+                    m_name = master_poke.get(f'わざ{zn}')
+                    if m_name:
+                        default_moves.append(str(m_name).strip())
+            default_moves = default_moves[:4]
+            while len(default_moves) < 4:
+                default_moves.append("-")
+            
+            if 'ポケモン' not in p or not isinstance(p['ポケモン'], list):
+                p['ポケモン'] = []
+
+            p['ポケモン'].append({
+                "名前": pokemon,
+                "レベル": 50,
+                "もちもの": None,
+                "わざ": default_moves
+            })
+
+            # Clear wishes after approval so player can select next wishes or move to active
+            for i in range(1, 6):
+                if f'希望{i}' in p:
+                    p[f'希望{i}'] = None
+
             found = True
             break
 
@@ -999,7 +1027,130 @@ def admin_approve():
 
     return jsonify({
         "success": True,
-        "message": f"ユーザー '{user_id}' に {pokemon1} と {pokemon2} を割り当てて承認しました。"
+        "message": f"ユーザー '{user_id}' に {pokemon} を割り当てて承認しました。"
+    })
+
+@app.route('/api/admin/export_wishes_csv', methods=['GET'])
+def export_wishes_csv():
+    import csv
+    import io
+    from flask import Response
+
+    players = get_players()
+    
+    output = io.StringIO()
+    # Add BOM for Excel UTF-8 compatibility
+    output.write('\ufeff')
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(['名前', '第一希望', '第二希望', '第三希望', '第四希望'])
+    
+    for p in players:
+        name = p.get('名前') or p.get('ユーザid') or ''
+        w1 = p.get('希望1') or ''
+        w2 = p.get('希望2') or ''
+        w3 = p.get('希望3') or ''
+        w4 = p.get('希望4') or ''
+        writer.writerow([name, w1, w2, w3, w4])
+        
+    response = Response(output.getvalue(), mimetype='text/csv; charset=utf-8-sig')
+    response.headers['Content-Disposition'] = 'attachment; filename=wishes.csv'
+    return response
+
+@app.route('/api/admin/batch_approve_csv', methods=['POST'])
+def batch_approve_csv():
+    import csv
+    import io
+
+    if 'file' in request.files:
+        file_obj = request.files['file']
+        content = file_obj.read().decode('utf-8-sig', errors='ignore')
+    else:
+        data = request.json or {}
+        content = data.get('csv_text', '')
+
+    if not content.strip():
+        return jsonify({"success": False, "message": "CSVデータが空です。"}), 400
+
+    pokemon_list = get_pokemon_list()
+    players = get_players()
+
+    reader = csv.reader(io.StringIO(content))
+    
+    success_count = 0
+    errors = []
+
+    for row_idx, row in enumerate(reader, start=1):
+        if not row or len(row) < 2:
+            continue
+        
+        # Header check
+        name_input = row[0].strip()
+        poke_input = row[1].strip()
+        if row_idx == 1 and (name_input in ['名前', 'ユーザid', 'ユーザーID', 'user_id', 'ID'] or poke_input in ['ポケモン', '割当ポケモン', '決定ポケモン']):
+            continue
+        
+        if not name_input or not poke_input:
+            continue
+
+        # Match player by name or user_id
+        target_player = None
+        for p in players:
+            if (p.get('名前') and p.get('名前').strip() == name_input) or check_user_id(p.get('ユーザid'), name_input):
+                target_player = p
+                break
+
+        if not target_player:
+            errors.append(f"行 {row_idx}: ユーザー '{name_input}' が見つかりません。")
+            continue
+
+        p_list = target_player.get('ポケモン', [])
+        if len(p_list) >= 2:
+            errors.append(f"行 {row_idx}: ユーザー '{name_input}' は既に2体所持しています。")
+            continue
+
+        # Prepare default moves
+        default_moves = []
+        master_poke = next((pk for pk in pokemon_list if pk.get('名前') == poke_input), None)
+        if master_poke:
+            for zn in ["１", "２", "３", "４", "５"]:
+                m_name = master_poke.get(f'わざ{zn}')
+                if m_name:
+                    default_moves.append(str(m_name).strip())
+        default_moves = default_moves[:4]
+        while len(default_moves) < 4:
+            default_moves.append("-")
+
+        if 'ポケモン' not in target_player or not isinstance(target_player['ポケモン'], list):
+            target_player['ポケモン'] = []
+
+        target_player['ポケモン'].append({
+            "名前": poke_input,
+            "レベル": 50,
+            "もちもの": None,
+            "わざ": default_moves
+        })
+
+        # Clear wishes
+        for i in range(1, 6):
+            if f'希望{i}' in target_player:
+                target_player[f'希望{i}'] = None
+
+        success_count += 1
+
+    if success_count > 0:
+        save_players(players)
+
+    msg = f"{success_count} 名の割当を完了しました。"
+    if errors:
+        msg += f" (エラー: {len(errors)}件)"
+
+    return jsonify({
+        "success": True,
+        "message": msg,
+        "success_count": success_count,
+        "errors": errors
     })
 
 # Shop API: 装備

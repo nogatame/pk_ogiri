@@ -7,10 +7,10 @@
 /* Base styling & Design Tokens */
 :root {
     --bg-color: #E1FFF1;
-    --card-bg: rgba(10, 24, 15, 0.95);
-    --card-border: #22c55e;
-    --text-primary: #f8fafc;
-    --text-secondary: #c0dec8;
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --card-border: #16a34a;
+    --text-primary: #000000;
+    --text-secondary: #1e293b;
     --primary: #22c55e;
     --primary-hover: #16a34a;
     --primary-glow: rgba(34, 197, 94, 0.55);
@@ -433,7 +433,7 @@ body {
 .section-title {
     font-size: 1.1rem;
     margin-bottom: 20px;
-    color: #f1f5f9;
+    color: #0f172a;
     font-weight: 700;
 }
 
@@ -488,8 +488,8 @@ body {
 #battle-arena {
     width: 67%;
     height: 100%;
-    background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-    border-right: 1px solid var(--card-border);
+    background: transparent;
+    border-right: none;
     padding: 12px;
     display: flex;
     justify-content: space-between;
@@ -497,20 +497,20 @@ body {
     position: relative;
 }
 
-/* Arena sides (Pokemon layout) */
+/* Arena sides (Pokemon layout) - Frameless side column style like battle_view */
 .poke-battle-card {
-    width: 42%;
-    height: 90%;
-    background: rgba(15, 23, 42, 0.65);
-    border: 1px solid var(--card-border);
-    border-radius: var(--border-radius);
-    padding: 10px;
+    width: 44%;
+    height: 95%;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 6px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     position: relative;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: none;
     transition: transform 0.1s ease;
 }
 
@@ -533,18 +533,19 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 75%;
+    color: #000000;
 }
 
 .poke-level {
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: #1e293b;
     font-weight: 700;
 }
 
 .hp-bar-container {
     width: 100%;
     height: 8px;
-    background-color: #334155;
+    background-color: #cbd5e1;
     border-radius: 4px;
     overflow: hidden;
     margin-bottom: 4px;
@@ -566,11 +567,12 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: #1e293b;
 }
 
 .poke-types {
-    background: #1e293b;
+    background: #0f172a;
+    color: #ffffff;
     padding: 1px 6px;
     border-radius: 4px;
     font-size: 0.65rem;
@@ -579,16 +581,44 @@ body {
 .hp-val {
     font-family: var(--font-retro);
     font-size: 0.65rem;
-    color: var(--text-primary);
+    color: #000000;
+    font-weight: 700;
 }
 
-/* Sprite graphics */
+/* Sprite graphics with footing pedestal background */
+.poke-sprite-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.poke-footing-bg {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 45px;
+    background-image: url('/static/image/footing.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    z-index: 1;
+    pointer-events: none;
+}
+
 .poke-sprite-placeholder {
     font-size: 3.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-grow: 1;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 15px;
     animation: float 2.5s ease-in-out infinite alternate;
 }
 
@@ -925,7 +955,7 @@ body {
     align-items: center;
     justify-content: flex-end;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.8);
+    background: #0d2015;
     border-bottom: 1px solid var(--card-border);
     font-size: 0.9rem;
     font-weight: 700;
@@ -987,25 +1017,27 @@ body {
     display: flex;
     align-items: center;
     padding: 8px 14px;
-    background: rgba(15, 23, 42, 0.8);
+    background: #0d2015;
     border-bottom: 1px solid var(--card-border);
     gap: 10px;
     flex-shrink: 0;
 }
 .shop-back-btn {
-    background: none;
+    background: #193825;
     border: 1px solid var(--card-border);
-    color: var(--text-secondary);
+    color: #ffffff;
     border-radius: 6px;
-    padding: 5px 12px;
+    padding: 6px 14px;
     cursor: pointer;
     font-family: var(--font-game);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 700;
     transition: all 0.15s;
 }
 .shop-back-btn:hover {
     border-color: var(--primary);
-    color: var(--text-primary);
+    background: #225234;
+    color: #ffffff;
 }
 .shop-back-bar span {
     font-size: 0.9rem;
@@ -1017,6 +1049,7 @@ body {
     display: flex;
     flex: 1;
     overflow: hidden;
+    background: #0d2015;
 }
 
 /* Left panel: column & list */
@@ -1027,6 +1060,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background: #0a1910;
 }
 
 .shop-item-list {
@@ -1043,18 +1077,18 @@ body {
     width: 100%;
     border-bottom: 1px solid var(--card-border);
     flex-shrink: 0;
-    background: rgba(15, 23, 42, 0.4);
+    background: #07120b;
 }
 
 .shop-sub-tab {
     flex: 1;
-    padding: 8px 4px;
+    padding: 10px 4px;
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
-    color: var(--text-secondary);
+    color: #a7f3d0;
     font-family: var(--font-game);
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
     text-align: center;
@@ -1062,30 +1096,32 @@ body {
 }
 
 .shop-sub-tab:hover {
-    color: var(--text-primary);
+    color: #ffffff;
+    background: rgba(34, 197, 94, 0.1);
 }
 
 .shop-sub-tab.active {
-    color: var(--primary);
+    color: #ffffff;
     border-bottom-color: var(--primary);
-    background: rgba(34, 197, 94, 0.05);
+    background: rgba(34, 197, 94, 0.2);
+    font-weight: 900;
 }
 
 .shop-item-row {
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(39, 53, 84, 0.6);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
     transition: background 0.15s;
-    color: var(--text-primary);
+    color: #ffffff;
 }
 .shop-item-row:hover {
-    background: rgba(34, 197, 94, 0.12);
+    background: rgba(34, 197, 94, 0.15);
 }
 .shop-item-row.selected {
-    background: rgba(34, 197, 94, 0.22);
-    border-left: 3px solid var(--primary);
+    background: rgba(34, 197, 94, 0.3);
+    border-left: 4px solid var(--primary);
     color: #86efac;
 }
 
@@ -1097,6 +1133,7 @@ body {
     padding: 16px;
     position: relative;
     overflow-y: auto;
+    background: #0d2015;
 }
 
 .shop-detail-placeholder {
@@ -1104,8 +1141,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: #a7f3d0;
+    font-size: 0.95rem;
+    font-weight: 700;
 }
 
 .shop-detail-content {
@@ -1119,9 +1157,9 @@ body {
 }
 
 .shop-detail-name {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 900;
-    color: var(--text-primary);
+    color: #ffffff;
 }
 .shop-detail-category {
     display: inline-block;
@@ -1129,15 +1167,17 @@ body {
     border: 1px solid var(--primary);
     border-radius: 4px;
     padding: 2px 8px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #86efac;
     margin-top: 2px;
+    width: fit-content;
 }
 .shop-detail-effect {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    font-size: 0.9rem;
+    color: #e2e8f0;
     line-height: 1.6;
     flex: 1;
+    font-weight: 600;
 }
 
 .shop-detail-price-row {
@@ -1145,14 +1185,14 @@ body {
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #fbbf24;
 }
 .shop-detail-price-row .price-label {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-weight: 400;
+    color: #a7f3d0;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .shop-action-row {
@@ -1198,8 +1238,8 @@ body {
     background: #15803d;
 }
 .shop-action-btn:disabled {
-    background: #334155 !important;
-    color: #64748b !important;
+    background: #1f3527 !important;
+    color: #4ade8055 !important;
     cursor: not-allowed;
 }
 
@@ -1209,7 +1249,7 @@ body {
     bottom: 70px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.97);
+    background: #0d2015;
     border: 1px solid var(--success);
     color: #6ee7b7;
     padding: 8px 18px;
@@ -1232,19 +1272,22 @@ body {
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    background: #0d2015;
 }
 .bag-header {
     padding: 12px 16px;
-    background: rgba(15, 23, 42, 0.8);
+    background: #07120b;
     border-bottom: 1px solid var(--card-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    color: #ffffff;
 }
 .bag-header h3 {
     font-size: 1rem;
     font-weight: 700;
+    color: #ffffff;
 }
 .bag-money {
     font-size: 0.9rem;
@@ -1255,6 +1298,7 @@ body {
     display: flex;
     flex: 1;
     overflow: hidden;
+    background: #0d2015;
 }
 .bag-item-list {
     width: 33%;
@@ -1263,20 +1307,21 @@ body {
     border-right: 1px solid var(--card-border);
     display: flex;
     flex-direction: column;
+    background: #0a1910;
 }
 .bag-item-row {
     padding: 12px 14px;
-    border-bottom: 1px solid rgba(39, 53, 84, 0.6);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
     transition: background 0.15s;
-    color: var(--text-primary);
+    color: #ffffff;
 }
-.bag-item-row:hover { background: rgba(34, 197, 94, 0.1); }
+.bag-item-row:hover { background: rgba(34, 197, 94, 0.15); }
 .bag-item-row.selected {
-    background: rgba(34, 197, 94, 0.2);
-    border-left: 3px solid var(--primary);
+    background: rgba(34, 197, 94, 0.3);
+    border-left: 4px solid var(--primary);
     color: #86efac;
 }
 .bag-empty-msg {
@@ -1284,8 +1329,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: #a7f3d0;
+    font-size: 0.95rem;
+    font-weight: 700;
     padding: 20px;
     text-align: center;
 }
@@ -1297,14 +1343,16 @@ body {
     gap: 10px;
     position: relative;
     overflow-y: auto;
+    background: #0d2015;
 }
 .bag-detail-placeholder {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    color: #a7f3d0;
+    font-size: 0.95rem;
+    font-weight: 700;
 }
 .bag-detail-content {
     display: none;
@@ -1316,14 +1364,16 @@ body {
     display: flex;
 }
 .bag-detail-name {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 900;
+    color: #ffffff;
 }
 .bag-detail-effect {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
+    font-size: 0.9rem;
+    color: #e2e8f0;
     line-height: 1.6;
     flex: 1;
+    font-weight: 600;
 }
 
 /* ===== SHOP CONFIRMATION MODAL ===== */

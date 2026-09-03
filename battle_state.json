@@ -3,50 +3,93 @@
     "grading_viewers": [],
     "active_battle": {
         "active": true,
-        "player_a": "china",
-        "player_b": "test1",
+        "player_a": "japan",
+        "player_b": "china",
         "a_pokemon": [
             {
-                "name": "シャワーズ",
-                "番号": 28,
+                "name": "ギャラドス",
+                "番号": 19,
                 "type1": "みず",
-                "type2": null,
-                "max_hp": 130,
-                "hp": 130,
-                "attack": 65,
-                "defense": 60,
-                "sp_attack": 110,
-                "sp_defense": 95,
+                "type2": "ひこう",
+                "max_hp": 95,
+                "hp": 95,
+                "attack": 125,
+                "defense": 79,
+                "sp_attack": 60,
+                "sp_defense": 100,
                 "moves": [
                     {
-                        "name": "ハイドロカノン",
+                        "name": "アクアブレイク",
                         "type": "みず",
-                        "power": 81,
-                        "category": "特殊"
+                        "power": 54,
+                        "category": "物理"
                     },
                     {
-                        "name": "なみのり",
-                        "type": "みず",
+                        "name": "ブレイブバード",
+                        "type": "ひこう",
+                        "power": 54,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "じならし",
+                        "type": "じめん",
                         "power": 36,
-                        "category": "特殊"
+                        "category": "物理"
                     },
                     {
-                        "name": "こごえるかぜ",
-                        "type": "こおり",
+                        "name": "はっぱカッター",
+                        "type": "くさ",
                         "power": 16,
-                        "category": "特殊"
-                    },
-                    {
-                        "name": "みずのはどう",
-                        "type": "みず",
-                        "power": 16,
-                        "category": "特殊"
+                        "category": "物理"
                     }
                 ],
-                "item": "しんぴのしずく",
+                "item": "たべのこし",
                 "level": 50,
                 "choice_lock": null
             },
+            {
+                "name": "カビゴン",
+                "番号": 17,
+                "type1": "ノーマル",
+                "type2": null,
+                "max_hp": 163,
+                "hp": 163,
+                "attack": 110,
+                "defense": 65,
+                "sp_attack": 65,
+                "sp_defense": 110,
+                "moves": [
+                    {
+                        "name": "ギガインパクト",
+                        "type": "ノーマル",
+                        "power": 54,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "のしかかり",
+                        "type": "ノーマル",
+                        "power": 36,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "シャドークロー",
+                        "type": "ゴースト",
+                        "power": 36,
+                        "category": "物理"
+                    },
+                    {
+                        "name": "はっぱカッター",
+                        "type": "くさ",
+                        "power": 16,
+                        "category": "物理"
+                    }
+                ],
+                "item": "ゴツゴツメット",
+                "level": 50,
+                "choice_lock": null
+            }
+        ],
+        "b_pokemon": [
             {
                 "name": "デンリュウ",
                 "番号": 33,
@@ -87,88 +130,45 @@
                 "item": "オボンのみ",
                 "level": 50,
                 "choice_lock": null
-            }
-        ],
-        "b_pokemon": [
-            {
-                "name": "キノガッサ",
-                "番号": 18,
-                "type1": "くさ",
-                "type2": "かくとう",
-                "max_hp": 60,
-                "hp": 60,
-                "attack": 130,
-                "defense": 80,
-                "sp_attack": 60,
-                "sp_defense": 60,
-                "moves": [
-                    {
-                        "name": "リーフブレード",
-                        "type": "くさ",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "インファイト",
-                        "type": "かくとう",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "いわなだれ",
-                        "type": "いわ",
-                        "power": 36,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "はっぱカッター",
-                        "type": "くさ",
-                        "power": 16,
-                        "category": "物理"
-                    }
-                ],
-                "item": "リリバのみ",
-                "level": 50,
-                "choice_lock": null
             },
             {
-                "name": "カバルドン",
-                "番号": 16,
-                "type1": "じめん",
+                "name": "シャワーズ",
+                "番号": 28,
+                "type1": "みず",
                 "type2": null,
-                "max_hp": 108,
-                "hp": 108,
-                "attack": 112,
-                "defense": 118,
-                "sp_attack": 68,
-                "sp_defense": 72,
+                "max_hp": 130,
+                "hp": 130,
+                "attack": 65,
+                "defense": 60,
+                "sp_attack": 110,
+                "sp_defense": 95,
                 "moves": [
                     {
-                        "name": "じわれ",
-                        "type": "じめん",
-                        "power": 100,
-                        "category": "物理"
+                        "name": "ハイドロカノン",
+                        "type": "みず",
+                        "power": 81,
+                        "category": "特殊"
                     },
                     {
-                        "name": "じしん",
-                        "type": "じめん",
-                        "power": 54,
-                        "category": "物理"
-                    },
-                    {
-                        "name": "いわなだれ",
-                        "type": "いわ",
+                        "name": "なみのり",
+                        "type": "みず",
                         "power": 36,
-                        "category": "物理"
+                        "category": "特殊"
                     },
                     {
-                        "name": "じだんだ",
-                        "type": "じめん",
+                        "name": "こごえるかぜ",
+                        "type": "こおり",
                         "power": 16,
-                        "category": "物理"
+                        "category": "特殊"
+                    },
+                    {
+                        "name": "みずのはどう",
+                        "type": "みず",
+                        "power": 16,
+                        "category": "特殊"
                     }
                 ],
-                "item": null,
+                "item": "しんぴのしずく",
                 "level": 50,
                 "choice_lock": null
             }
@@ -184,7 +184,7 @@
         "scores": [],
         "voted_graders": [],
         "messages": [
-            "バトル開始！ 高木 VS あ"
+            "バトル開始！ 西川 VS 高木"
         ],
         "last_confirmed_score": null,
         "last_calculated_score": 0,

@@ -10,14 +10,14 @@
     <style>
         :root {
             --bg-color: #E1FFF1;
-            --card-bg: #0c1f13;
+            --card-bg: #0d2015;
             --text-color: #f8fafc;
-            --text-muted: #a3b8a8;
-            --primary: #22c55e;
-            --primary-hover: #16a34a;
+            --text-muted: #a7f3d0;
+            --primary: #16a34a;
+            --primary-hover: #15803d;
             --success: #10b981;
             --error: #ef4444;
-            --border: #1a3f28;
+            --border: #1f4e30;
         }
 
         body {
@@ -47,7 +47,7 @@
         h1 {
             margin: 0;
             font-size: 1.5rem;
-            color: #0f172a;
+            color: #064e3b;
         }
 
         .btn {
@@ -182,14 +182,24 @@
     <div class="container">
         <header>
             <h1>ポケモンシミュレーター 管理者画面</h1>
-            <button id="refresh-btn" class="btn btn-refresh">🔄 リストを更新</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="export-csv-btn" class="btn" style="background-color: #0284c7;">📥 希望CSVを出力</button>
+                <button id="refresh-btn" class="btn btn-refresh">🔄 リストを更新</button>
+            </div>
         </header>
 
         <div class="instruction-box">
             <strong>📋 割り当てと承認手順:</strong>
             <br>
-            新規登録ユーザーの希望ポケモンを参考に、割り当てるポケモンを決定して「OK (承認)」ボタンを押してください。
-            裏でExcelファイルが自動的に更新され、ユーザーの待機状態が解除されます（Excelを直接編集して閉じる必要はありません）。
+            新規登録ユーザーの希望ポケモンを参考に割り当てるポケモンを決定するか、CSV一括割当をご利用ください。
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h2 style="margin-top: 0; font-size: 1.1rem; color: var(--text-muted);">📤 CSV一括割当（名前,割当ポケモン）</h2>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <input type="file" id="csv-file-input" accept=".csv" style="color: white; font-size: 0.9rem;">
+                <button id="upload-csv-btn" class="btn" style="background-color: #d97706;">一括割り当てを実行</button>
+            </div>
         </div>
 
         <div class="card">
@@ -200,8 +210,8 @@
                         <tr>
                             <th>ユーザーID</th>
                             <th>名前</th>
-                            <th>希望ポケモン (1〜5)</th>
-                            <th>割り当て決定 (ポケモン1 &amp; ポケモン2)</th>
+                            <th>希望ポケモン (1〜4)</th>
+                            <th>割り当て決定</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -267,19 +277,23 @@
                 // Build wish list HTML
                 const wishListHTML = user.wishes.map((w, idx) => `<li>第${idx+1}: ${w || '未選択'}</li>`).join('');
                 
-                // Default setup: Prefill select boxes with 1st and 2nd choices if available
-                const defaultP1 = user.wishes[0] || '';
-                const defaultP2 = user.wishes[1] || '';
+                // Default setup: Prefill select box with 1st choice if available
+                const defaultPoke = user.wishes[0] || '';
 
-                // Build options HTML for select boxes
+                // Build options HTML for select box
                 let optionsHTML = '<option value="">選択してください</option>';
                 allPokemons.forEach(pokeName => {
                     optionsHTML += `<option value="${pokeName}">${pokeName}</option>`;
                 });
+                
+                const stepLabel = user.step === 2 ? '2匹目' : '1匹目';
+                const currentPokeInfo = user.pokemon1 ? `<div class="current-poke-info" style="font-size: 0.85em; color: #888;">(1匹目: ${user.pokemon1})</div>` : '';
+
                 tr.innerHTML = `
                     <td><strong>${user.user_id}</strong></td>
                     <td><strong>${user.name || '-'}</strong></td>
                     <td>
+                        <div style="font-weight: bold; margin-bottom: 4px; color: #4a90e2;">[${stepLabel}決定待ち]</div>
                         <ol class="wish-list">
                             ${wishListHTML}
                         </ol>
@@ -287,60 +301,51 @@
                     <td>
                         <div class="allocation-selects">
                             <div class="select-group">
-                                <label>ポケモン 1</label>
-                                <select class="poke1-select" id="poke1-${user.user_id}">
+                                <label>割当ポケモン (${stepLabel})</label>
+                                <select class="poke-select" id="poke-${user.user_id}">
                                     ${optionsHTML}
                                 </select>
                             </div>
-                            <div class="select-group">
-                                <label>ポケモン 2</label>
-                                <select class="poke2-select" id="poke2-${user.user_id}">
-                                    ${optionsHTML}
-                                </select>
-                            </div>
+                            ${currentPokeInfo}
                         </div>
                     </td>
                     <td>
-                        <button class="btn approve-btn" data-id="${user.user_id}">OK (承認)</button>
+                        <button class="btn approve-btn" data-id="${user.user_id}">${stepLabel}を決定</button>
                     </td>
                 `;
 
-                // Set default selections
-                const select1 = tr.querySelector(`.poke1-select`);
-                const select2 = tr.querySelector(`.poke2-select`);
-                if (allPokemons.includes(defaultP1)) select1.value = defaultP1;
-                if (allPokemons.includes(defaultP2)) select2.value = defaultP2;
+                // Set default selection
+                const select = tr.querySelector(`.poke-select`);
+                if (allPokemons.includes(defaultPoke)) select.value = defaultPoke;
 
-                // Bind click event to OK button
+                // Bind click event to approve button
                 tr.querySelector('.approve-btn').addEventListener('click', () => {
-                    const poke1 = select1.value;
-                    const poke2 = select2.value;
+                    const selectedPoke = select.value;
                     
-                    if (!poke1 || !poke2) {
-                        showToast('ポケモン1とポケモン2を両方選択してください。', false);
+                    if (!selectedPoke) {
+                        showToast('割当ポケモンを選択してください。', false);
                         return;
                     }
-                    if (poke1 === poke2) {
-                        showToast('同じポケモンを2つ割り当てることはできません。', false);
+                    if (user.pokemon1 && selectedPoke === user.pokemon1) {
+                        showToast('すでに1匹目に決定されたポケモンと同じポケモンは選択できません。', false);
                         return;
                     }
                     
-                    approveUser(user.user_id, poke1, poke2);
+                    approveUser(user.user_id, selectedPoke);
                 });
                 
                 usersList.appendChild(tr);
             });
         }
 
-        async function approveUser(userId, poke1, poke2) {
+        async function approveUser(userId, pokemon) {
             try {
                 const response = await fetch('/api/admin/approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         user_id: userId,
-                        pokemon1: poke1,
-                        pokemon2: poke2
+                        pokemon: pokemon
                     })
                 });
                 const data = await response.json();
@@ -358,6 +363,40 @@
         }
 
         document.getElementById('refresh-btn').addEventListener('click', fetchPendingUsers);
+
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            window.location.href = '/api/admin/export_wishes_csv';
+        });
+
+        document.getElementById('upload-csv-btn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('csv-file-input');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast('CSVファイルを選択してください。', false);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/admin/batch_approve_csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(data.message);
+                    fileInput.value = '';
+                    fetchPendingUsers();
+                } else {
+                    showToast(data.message || 'CSV割当に失敗しました。', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        });
 
         // --- Battle Administration Logic ---
         // Create new container for Battle administration

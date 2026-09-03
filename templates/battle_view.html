@@ -16,8 +16,8 @@
 
         :root {
             --bg-color: #E1FFF1;
-            --card-bg: rgba(10, 24, 15, 0.75);
-            --border-color: #22c55e;
+            --card-bg: rgba(10, 26, 17, 0.92);
+            --border-color: #15803d;
             --primary: #22c55e;
             --danger: #ef4444;
             --success: #22c55e;
@@ -197,12 +197,29 @@
             color: #d1d5db;
         }
 
-        /* Sprite image display with active target neon highlights */
+        /* Sprite image display with active target neon highlights and footing */
         .poke-display {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 460px;
+            position: relative;
+        }
+
+        .poke-display::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 320px;
+            height: 90px;
+            background-image: url('/static/image/footing.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            z-index: 1;
+            pointer-events: none;
         }
 
         /* Sprite positioning styles */
@@ -216,6 +233,8 @@
             image-rendering: pixelated; /* Ensure crisp pixel art */
             filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
             transition: filter 0.3s ease, transform 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
 
         #poke-a-sprite-inner {
@@ -319,14 +338,14 @@
         .standby-title {
             font-size: 2.2rem;
             font-weight: 900;
-            color: var(--primary);
+            color: #065f46;
             margin-bottom: 15px;
-            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            text-shadow: none;
         }
 
         .standby-desc {
             font-size: 1.25rem;
-            color: #9ca3af;
+            color: #0f5132;
         }
 
         .hidden {

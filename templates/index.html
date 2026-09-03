@@ -47,8 +47,8 @@
         <!-- 2. CHOICE SCREEN -->
         <div id="choice-screen" class="screen">
             <div class="card choice-card">
-                <h2>希望ポケモン選択</h2>
-                <p class="instruction">第1希望から第5希望まで、異なるポケモンを選択してください。（すべて必須入力）</p>
+                <h2 id="choice-screen-title">1匹目の希望ポケモン選択</h2>
+                <p class="instruction" id="choice-screen-instruction">第1希望から第4希望まで、異なるポケモンを選択してください。（すべて必須入力）</p>
                 
                 <div class="choices-grid">
                     <div class="choice-row">
@@ -67,10 +67,6 @@
                         <label>第4希望</label>
                         <select id="wish-4" class="wish-select"><option value="">選択してください</option></select>
                     </div>
-                    <div class="choice-row">
-                        <label>第5希望</label>
-                        <select id="wish-5" class="wish-select"><option value="">選択してください</option></select>
-                    </div>
                 </div>
 
                 <button id="submit-wishes-btn" class="btn primary-btn" disabled>希望を送信する</button>
@@ -82,8 +78,8 @@
         <div id="waiting-screen" class="screen">
             <div class="card waiting-card">
                 <div class="spinner"></div>
-                <h2>全員の回答が出そろうまで少々お待ちください。</h2>
-                <p class="status-sub">管理者がExcelにあなたのポケモンを割り当てています...</p>
+                <h2 id="waiting-screen-title">全員の回答が出そろうまで少々お待ちください。</h2>
+                <p class="status-sub" id="waiting-screen-sub">管理者があなたのポケモンを割り当てています...</p>
                 <div class="user-id-badge">ID: <span id="waiting-username"></span></div>
             </div>
         </div>
@@ -291,15 +287,15 @@
                     </div>
 
                     <!-- B. Battle Waiting Queue Screen -->
-                    <div id="battle-waiting-subview" class="battle-subview waiting-card" style="display: none; text-align: center; padding: 40px 20px; flex-direction: column; align-items: center;">
+                    <div id="battle-waiting-subview" class="battle-subview waiting-card" style="display: none; text-align: center; padding: 30px 20px; flex-direction: column; align-items: center; background: #0d2015; border: 1px solid var(--card-border); border-radius: var(--border-radius); max-width: 450px; margin: 30px auto;">
                         <div class="spinner"></div>
-                        <h2 style="margin-top: 20px;">対戦相手が選ばれるのを待っています...</h2>
-                        <p style="color: var(--text-muted);">管理者が対戦相手を選んでバトルを開始すると、自動的に画面が切り替わります。</p>
+                        <h2 style="margin-top: 20px; color: #ffffff; font-size: 1.2rem;">対戦相手が選ばれるのを待っています...</h2>
+                        <p style="color: #a7f3d0; margin-top: 10px; font-size: 0.9rem; line-height: 1.5;">管理者が対戦相手を選んでバトルを開始すると、自動的に画面が切り替わります。</p>
                         <button id="battle-leave-queue-btn" class="btn secondary-btn" style="margin-top: 20px; width: 100%; max-width: 200px;">キャンセル</button>
                     </div>
 
                     <!-- C. Interactive Player Battle Arena -->
-                    <div id="battle-player-arena-subview" class="battle-subview" style="display: none; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; padding: 10px;">
+                    <div id="battle-player-arena-subview" class="battle-subview" style="display: none; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; padding: 10px; background: #0d2015;">
                         <div id="player-arena-layout" style="display: flex; flex-direction: column; gap: 15px; height: 100%;">
                             <!-- Opponent Pokemon Card -->
                             <div class="poke-battle-card" id="p-battle-card-opp" style="margin-bottom: 0;">
@@ -378,16 +374,18 @@
 
                     <!-- D. Interactive Grader Panel -->
                     <div id="battle-grader-subview" class="battle-subview" style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box; text-align: center; gap: 25px;">
-                        <h2 style="color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px;"><img src="/static/image/Scoring.png" class="inline-icon" alt="採点"> 審査員の採点画面</h2>
-                        <p style="color: var(--text-muted);">回答者のわざを審査して、以下のボタンから1〜3の点数で評価を付けてください。</p>
-                        
-                        <div id="grader-button-row" style="display: flex; gap: 15px; width: 100%; max-width: 400px;">
-                            <button class="btn primary-btn grader-point-btn" data-point="1" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">1</button>
-                            <button class="btn primary-btn grader-point-btn" data-point="2" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">2</button>
-                            <button class="btn primary-btn grader-point-btn" data-point="3" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">3</button>
+                        <div class="card" style="max-width: 500px; width: 90%; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                            <h2 style="color: #22c55e; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.3rem;"><img src="/static/image/Scoring.png" class="inline-icon" alt="採点"> 審査員の採点画面</h2>
+                            <p style="color: #a7f3d0; font-size: 0.95rem; line-height: 1.5;">回答者のわざを審査して、以下のボタンから1〜3の点数で評価を付けてください。</p>
+                            
+                            <div id="grader-button-row" style="display: flex; gap: 15px; width: 100%; max-width: 400px;">
+                                <button class="btn primary-btn grader-point-btn" data-point="1" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">1</button>
+                                <button class="btn primary-btn grader-point-btn" data-point="2" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">2</button>
+                                <button class="btn primary-btn grader-point-btn" data-point="3" style="flex: 1; font-size: 2rem; padding: 20px; font-weight: 900;">3</button>
+                            </div>
+                            
+                            <button id="grader-exit-btn" class="btn secondary-btn" style="margin-top: 10px; width: 100%; max-width: 200px;">採点をやめる</button>
                         </div>
-                        
-                        <button id="grader-exit-btn" class="btn secondary-btn" style="margin-top: 20px; width: 100%; max-width: 200px;">採点をやめる</button>
                     </div>
                 </div>
 
@@ -476,38 +474,38 @@
                                         </div>
                                     </div>
                                     <div class="poke-sprite-placeholder" id="my-sprite">🤖</div>
-                                </div>
-                                
-                                <!-- Center Controls -->
-                                <div id="arena-controls">
-                                    <button id="swap-btn" class="circle-btn" title="操作ポケモンと相手を入れ替える">
-                                        <span class="swap-icon">⇄</span>
-                                        <span class="swap-lbl">入れ替え</span>
-                                    </button>
+                                 </div>
+                                 
+                                 <!-- Center Controls -->
+                                 <div id="arena-controls">
+                                     <button id="swap-btn" class="circle-btn" title="操作ポケモンと相手を入れ替える">
+                                         <span class="swap-icon">⇄</span>
+                                         <span class="swap-lbl">入れ替え</span>
+                                     </button>
 
-                                </div>
-                                
-                                <!-- Enemy Side -->
-                                <div class="poke-battle-card" id="enemy-battle-card">
-                                    <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
-                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="enemy-matchup-effective" style="color: #fff;">-</span></div>
-                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="enemy-matchup-ineffective" style="color: #fff;">-</span></div>
-                                    </div>
-                                    <div class="poke-info">
-                                        <div class="poke-name-row">
-                                            <span class="poke-battle-name" id="enemy-battle-name">-</span>
-                                            <span class="poke-level" id="enemy-battle-level">Lv.-</span>
-                                        </div>
-                                        <div class="hp-bar-container">
-                                            <div class="hp-bar-fill" id="enemy-hp-fill" style="width: 100%;"></div>
-                                        </div>
-                                        <div class="hp-text-row">
-                                            <span class="poke-types" id="enemy-battle-types">-</span>
-                                            <span class="hp-val"><span id="enemy-curr-hp">0</span>/<span id="enemy-max-hp">0</span></span>
-                                        </div>
-                                    </div>
-                                    <div class="poke-sprite-placeholder" id="enemy-sprite">👾</div>
-                                </div>
+                                 </div>
+                                 
+                                 <!-- Enemy Side -->
+                                 <div class="poke-battle-card" id="enemy-battle-card">
+                                     <div class="matchups-container" style="width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; margin-bottom: 6px; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; box-sizing: border-box;">
+                                         <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #ffa3a3; font-weight: bold; flex-shrink: 0;">ばつぐん:</span><span class="matchup-effective" id="enemy-matchup-effective" style="color: #fff;">-</span></div>
+                                         <div style="display: flex; gap: 4px; flex-wrap: wrap;"><span style="color: #a3d1ff; font-weight: bold; flex-shrink: 0;">いまひとつ:</span><span class="matchup-ineffective" id="enemy-matchup-ineffective" style="color: #fff;">-</span></div>
+                                     </div>
+                                     <div class="poke-info">
+                                         <div class="poke-name-row">
+                                             <span class="poke-battle-name" id="enemy-battle-name">-</span>
+                                             <span class="poke-level" id="enemy-battle-level">Lv.-</span>
+                                         </div>
+                                         <div class="hp-bar-container">
+                                             <div class="hp-bar-fill" id="enemy-hp-fill" style="width: 100%;"></div>
+                                         </div>
+                                         <div class="hp-text-row">
+                                             <span class="poke-types" id="enemy-battle-types">-</span>
+                                             <span class="hp-val"><span id="enemy-curr-hp">0</span>/<span id="enemy-max-hp">0</span></span>
+                                         </div>
+                                     </div>
+                                     <div class="poke-sprite-placeholder" id="enemy-sprite">👾</div>
+                                 </div>
                                 <div id="battle-message-banner" class="battle-message-banner hidden"></div>
                             </div>
                             

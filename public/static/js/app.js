@@ -81,9 +81,12 @@ const el = {
         document.getElementById('wish-1'),
         document.getElementById('wish-2'),
         document.getElementById('wish-3'),
-        document.getElementById('wish-4'),
-        document.getElementById('wish-5')
+        document.getElementById('wish-4')
     ],
+    choiceScreenTitle: document.getElementById('choice-screen-title'),
+    choiceScreenInstruction: document.getElementById('choice-screen-instruction'),
+    waitingScreenTitle: document.getElementById('waiting-screen-title'),
+    waitingScreenSub: document.getElementById('waiting-screen-sub'),
     submitWishesBtn: document.getElementById('submit-wishes-btn'),
     choiceError: document.getElementById('choice-error'),
 
@@ -168,23 +171,36 @@ function showSubscreen(subscreen) {
     subscreen.classList.add('active-sub');
 }
 
-// Routing helper based on user status
+// Routing
 function routeUserStatus(status, pokemon1, pokemon2) {
-    state.status = status;
-
     if (status === 'active') {
-        // Go straight to main dashboard
         loadGameData().then(() => {
             showScreen(el.mainScreen);
+            initMainGame();
         });
-    } else if (status === 'select_choices') {
-        // Load poke list for dropdowns first
-        loadWishesOptions().then(() => {
+    } else if (status === 'select_choices' || status === 'select_choices_1') {
+        if (el.choiceScreenTitle) el.choiceScreenTitle.textContent = "1匹目の希望ポケモン選択";
+        if (el.choiceScreenInstruction) el.choiceScreenInstruction.textContent = "第1希望から第4希望まで、異なるポケモンを選択してください。（すべて必須入力）";
+        loadWishesOptions([]).then(() => {
             showScreen(el.choiceScreen);
         });
-    } else if (status === 'waiting') {
-        // Go to waiting screen and start polling
+    } else if (status === 'select_choices_2') {
+        if (el.choiceScreenTitle) el.choiceScreenTitle.textContent = "2匹目の希望ポケモン選択";
+        if (el.choiceScreenInstruction) el.choiceScreenInstruction.textContent = `1匹目 (${pokemon1 || ''}) 以外のポケモンを第1希望から第4希望まで選択してください。`;
+        const excludeList = pokemon1 ? [pokemon1] : [];
+        loadWishesOptions(excludeList).then(() => {
+            showScreen(el.choiceScreen);
+        });
+    } else if (status === 'waiting' || status === 'waiting_1') {
         el.waitingUsername.textContent = state.userId;
+        if (el.waitingScreenTitle) el.waitingScreenTitle.textContent = "1匹目の回答が出そろうまで少々お待ちください。";
+        if (el.waitingScreenSub) el.waitingScreenSub.textContent = "管理者が1匹目のポケモンを割り当てています...";
+        showScreen(el.waitingScreen);
+        startPolling();
+    } else if (status === 'waiting_2') {
+        el.waitingUsername.textContent = state.userId;
+        if (el.waitingScreenTitle) el.waitingScreenTitle.textContent = "2匹目の回答が出そろうまで少々お待ちください。";
+        if (el.waitingScreenSub) el.waitingScreenSub.textContent = "管理者が2匹目のポケモンを割り当てています...";
         showScreen(el.waitingScreen);
         startPolling();
     } else if (status === 'ready') {
@@ -252,21 +268,18 @@ el.loginBtn.addEventListener('click', async () => {
 });
 
 // Register button click
+el.registerIdInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        el.registerBtn.click();
+    }
+});
+
 el.registerBtn.addEventListener('click', async () => {
     const userId = el.registerIdInput.value.trim();
     const name = el.registerNameInput.value.trim();
-    if (!userId) {
-        showAuthError("新規ユーザーIDを入力してください。");
-        return;
-    }
-    if (!name) {
-        showAuthError("名前を入力してください。");
-        return;
-    }
 
-    // Regexp validation check: alphanumeric, 4 chars or more
-    if (!/^[a-zA-Z0-9]{4,}$/.test(userId)) {
-        showAuthError("ユーザーIDは4文字以上の半角英数字にしてください。");
+    if (!userId) {
+        showAuthError("ユーザーIDを入力してください。");
         return;
     }
 
@@ -281,9 +294,9 @@ el.registerBtn.addEventListener('click', async () => {
         if (res.ok && data.success) {
             state.userId = data.user_id;
             sessionStorage.setItem('user_id', data.user_id);
-            routeUserStatus('select_choices', null, null);
+            routeUserStatus('select_choices_1', null, null);
         } else {
-            showAuthError(data.message || "アカウント作成に失敗しました。");
+            showAuthError(data.message || "登録に失敗しました。");
         }
     } catch (err) {
         console.error(err);
@@ -300,10 +313,8 @@ function showAuthError(msg) {
 // CHOICES (WISH LIST) SCREEN
 // ----------------------------------------------------
 
-async function loadWishesOptions() {
+async function loadWishesOptions(excludePokemons = []) {
     try {
-        // Fetch all pokemons first by requesting a subset of game data
-        // Just need poke list so we can fill dropdowns
         const res = await fetch('/api/game_data');
         const data = await res.json();
 
@@ -313,14 +324,15 @@ async function loadWishesOptions() {
                 TYPE_CHART = data.type_chart;
             }
 
-            // Populate select dropdowns
             el.wishSelects.forEach(select => {
                 select.innerHTML = '<option value="">選択してください</option>';
                 data.all_pokemons.forEach(poke => {
-                    const opt = document.createElement('option');
-                    opt.value = poke.name;
-                    opt.textContent = poke.name;
-                    select.appendChild(opt);
+                    if (!excludePokemons.includes(poke.name)) {
+                        const opt = document.createElement('option');
+                        opt.value = poke.name;
+                        opt.textContent = poke.name;
+                        select.appendChild(opt);
+                    }
                 });
             });
         }
@@ -345,8 +357,8 @@ el.wishSelects.forEach(select => {
             return;
         }
 
-        // Must select all 5
-        if (selectedValues.length === 5) {
+        // Must select all 4
+        if (selectedValues.length === 4) {
             el.submitWishesBtn.disabled = false;
         } else {
             el.submitWishesBtn.disabled = true;
@@ -367,7 +379,7 @@ el.submitWishesBtn.addEventListener('click', async () => {
         const data = await res.json();
 
         if (res.ok && data.success) {
-            routeUserStatus('waiting', null, null);
+            routeUserStatus(data.status, data.pokemon1, data.pokemon2);
         } else {
             el.choiceError.textContent = data.message || "送信に失敗しました。";
             el.choiceError.classList.remove('hidden');
@@ -392,22 +404,24 @@ function startPolling() {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                if (data.status === 'active') {
-                    // Stopping polling
+                if (data.status !== 'waiting' && data.status !== 'waiting_1' && data.status !== 'waiting_2') {
                     clearInterval(state.pollingInterval);
                     state.pollingInterval = null;
 
-                    // Show celebration screen
-                    el.obtainedName1.textContent = data.pokemon1;
-                    el.obtainedName2.textContent = data.pokemon2;
+                    if (data.status === 'active') {
+                        el.obtainedName1.textContent = data.pokemon1;
+                        el.obtainedName2.textContent = data.pokemon2;
 
-                    loadGameData().then(() => {
-                        const poke1 = state.allPokemons.find(p => p.name === data.pokemon1);
-                        const poke2 = state.allPokemons.find(p => p.name === data.pokemon2);
-                        setPokemonSprite(document.getElementById('obtained-sprite-1'), poke1 ? poke1.番号 : null, data.pokemon1);
-                        setPokemonSprite(document.getElementById('obtained-sprite-2'), poke2 ? poke2.番号 : null, data.pokemon2);
-                        showScreen(el.getScreen);
-                    });
+                        loadGameData().then(() => {
+                            const poke1 = state.allPokemons.find(p => p.name === data.pokemon1);
+                            const poke2 = state.allPokemons.find(p => p.name === data.pokemon2);
+                            setPokemonSprite(document.getElementById('obtained-sprite-1'), poke1 ? poke1.番号 : null, data.pokemon1);
+                            setPokemonSprite(document.getElementById('obtained-sprite-2'), poke2 ? poke2.番号 : null, data.pokemon2);
+                            showScreen(el.getScreen);
+                        });
+                    } else {
+                        routeUserStatus(data.status, data.pokemon1, data.pokemon2);
+                    }
                 }
             }
         } catch (err) {
