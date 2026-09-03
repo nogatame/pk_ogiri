@@ -1771,13 +1771,13 @@ def confirm_score_internal(forced_score=None):
                         owned.extend(["ちからのもと", "ちからのもと"])
                         p['もちもの'] = ','.join(owned)
 
-                # Damage calculation: Winner 1.3x, Loser 0.7x
+                # Damage calculation: Winner 1.5x, Loser 0.5x
                 winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
                 loser_raw_dmg = active_battle.get(f"{loser_role.lower()}_damage", 0)
                 if p_winner:
-                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.3))
+                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.5))
                 if p_loser:
-                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.7))
+                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.5))
 
                 save_players(players_data)
 
@@ -1821,13 +1821,13 @@ def confirm_score_internal(forced_score=None):
                         owned.extend(["ちからのもと", "ちからのもと"])
                         p['もちもの'] = ','.join(owned)
 
-                # Damage calculation: Winner 1.3x, Loser 0.7x
+                # Damage calculation: Winner 1.5x, Loser 0.5x
                 winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
                 loser_raw_dmg = active_battle.get(f"{loser_role.lower()}_damage", 0)
                 if p_winner:
-                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.3))
+                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.5))
                 if p_loser:
-                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.7))
+                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.5))
 
                 save_players(players_data)
 
