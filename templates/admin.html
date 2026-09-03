@@ -184,6 +184,7 @@
             <h1>ポケモンシミュレーター 管理者画面</h1>
             <div style="display: flex; gap: 10px;">
                 <button id="export-csv-btn" class="btn" style="background-color: #0284c7;">📥 希望CSVを出力</button>
+                <button id="export-damage-csv-btn" class="btn" style="background-color: #0d9488;">💥 ダメージCSVを出力</button>
                 <button id="refresh-btn" class="btn btn-refresh">🔄 リストを更新</button>
             </div>
         </header>
@@ -366,6 +367,10 @@
 
         document.getElementById('export-csv-btn').addEventListener('click', () => {
             window.location.href = '/api/admin/export_wishes_csv';
+        });
+
+        document.getElementById('export-damage-csv-btn').addEventListener('click', () => {
+            window.location.href = '/api/admin/export_damage_csv';
         });
 
         document.getElementById('upload-csv-btn').addEventListener('click', async () => {

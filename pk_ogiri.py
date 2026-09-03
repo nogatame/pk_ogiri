@@ -37,6 +37,8 @@ active_battle = {
     "b_active_idx": 0,
     "a_selected_move": None, # Move dict selected by A
     "b_selected_move": None, # Move dict selected by B
+    "a_damage": 0,    # Damage dealt by Player A in this battle
+    "b_damage": 0,    # Damage dealt by Player B in this battle
     "a_swapped": False, # Has A swapped manually in this battle?
     "b_swapped": False, # Has B swapped manually in this battle?
     "swap_request": None, # 'A' or 'B' requesting swap
@@ -329,6 +331,9 @@ def load_type_chart():
 
 def convert_player_format(player):
     modified = False
+    if '与ダメージ' not in player:
+        player['与ダメージ'] = 0
+        modified = True
     old_keys_exist = any(k in player for k in ['ポケモン1', 'ポケモン2', 'ポケモン１', 'ポケモン２'])
     if old_keys_exist:
         pokemon_list = []
@@ -550,12 +555,23 @@ def determine_player_status(player):
 
     wishes = [player.get(f'希望{i}') for i in range(1, 5)]
 
+    # Collect all pokemons taken as 1st pokemon by ANY player
+    all_players = get_players()
+    taken_pokemon1_list = []
+    for other_p in all_players:
+        other_list = other_p.get('ポケモン', [])
+        if len(other_list) > 0:
+            first_poke = other_list[0].get('名前')
+            if first_poke and first_poke not in taken_pokemon1_list:
+                taken_pokemon1_list.append(first_poke)
+
     return {
         "status": status,
         "step": step,
         "pokemon1": pokemon1,
         "pokemon2": pokemon2,
-        "wishes": wishes
+        "wishes": wishes,
+        "taken_pokemon1_list": taken_pokemon1_list
     }
 
 @app.route('/api/login', methods=['POST'])
@@ -653,6 +669,22 @@ def get_status():
     return jsonify({
         "success": True,
         **st_info
+    })
+
+@app.route('/api/all_pokemons', methods=['GET'])
+def all_pokemons_list():
+    pokemon_list = get_pokemon_list()
+    result = []
+    for p in pokemon_list:
+        p_name = p.get('名前')
+        if p_name:
+            result.append({
+                "name": str(p_name).strip(),
+                "番号": p.get('番号')
+            })
+    return jsonify({
+        "success": True,
+        "all_pokemons": result
     })
 
 @app.route('/api/game_data', methods=['GET'])
@@ -1056,6 +1088,31 @@ def export_wishes_csv():
         
     response = Response(output.getvalue(), mimetype='text/csv; charset=utf-8-sig')
     response.headers['Content-Disposition'] = 'attachment; filename=wishes.csv'
+    return response
+
+@app.route('/api/admin/export_damage_csv', methods=['GET'])
+def export_damage_csv():
+    import csv
+    import io
+    from flask import Response
+
+    players = get_players()
+    
+    output = io.StringIO()
+    # Add BOM for Excel UTF-8 compatibility
+    output.write('\ufeff')
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(['名前', '与ダメージ'])
+    
+    for p in players:
+        name = p.get('名前') or p.get('ユーザid') or ''
+        dmg = p.get('与ダメージ', 0)
+        writer.writerow([name, dmg])
+        
+    response = Response(output.getvalue(), mimetype='text/csv; charset=utf-8-sig')
+    response.headers['Content-Disposition'] = 'attachment; filename=damage.csv'
     return response
 
 @app.route('/api/admin/batch_approve_csv', methods=['POST'])
@@ -1629,6 +1686,10 @@ def confirm_score_internal(forced_score=None):
 
         mult, eff_msg = get_effectiveness(move_type, [defender_poke.get('type1'), defender_poke.get('type2')])
         defender_poke['hp'] = max(0, defender_poke['hp'] - damage)
+        if attacker_role == "A":
+            active_battle["a_damage"] = active_battle.get("a_damage", 0) + damage
+        else:
+            active_battle["b_damage"] = active_battle.get("b_damage", 0) + damage
         active_battle["messages"].append(f"わざ成功！{defender_poke['name']}に {damage} ダメージ！")
         if eff_msg:
             active_battle["messages"].append(eff_msg)
@@ -1693,17 +1754,28 @@ def confirm_score_internal(forced_score=None):
                 p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
-                loser_money = p_loser.get('所持金', 0)
+                loser_money = p_loser.get('所持金', 0) if p_loser else 0
                 prize = loser_money // 2
-                p_loser['所持金'] = loser_money - prize
-                p_winner['所持金'] = p_winner.get('所持金', 0) + prize
+                if p_loser:
+                    p_loser['所持金'] = loser_money - prize
+                if p_winner:
+                    p_winner['所持金'] = p_winner.get('所持金', 0) + prize
 
                 # Both get 2 Power Sources
                 for p in [p_winner, p_loser]:
-                    owned_raw = p.get('もちもの') or ''
-                    owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-                    owned.extend(["ちからのもと", "ちからのもと"])
-                    p['もちもの'] = ','.join(owned)
+                    if p:
+                        owned_raw = p.get('もちもの') or ''
+                        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+                        owned.extend(["ちからのもと", "ちからのもと"])
+                        p['もちもの'] = ','.join(owned)
+
+                # Damage calculation: Winner 1.3x, Loser 0.7x
+                winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
+                loser_raw_dmg = active_battle.get(f"{loser_role.lower()}_damage", 0)
+                if p_winner:
+                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.3))
+                if p_loser:
+                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.7))
 
                 save_players(players_data)
 
@@ -1732,17 +1804,28 @@ def confirm_score_internal(forced_score=None):
                 p_loser = next((p for p in players_data if check_user_id(p.get('ユーザid'), loser_id)), None)
 
                 # Transfer money: winner gets half of loser's money
-                loser_money = p_loser.get('所持金', 0)
+                loser_money = p_loser.get('所持金', 0) if p_loser else 0
                 prize = loser_money // 2
-                p_loser['所持金'] = loser_money - prize
-                p_winner['所持金'] = p_winner.get('所持金', 0) + prize
+                if p_loser:
+                    p_loser['所持金'] = loser_money - prize
+                if p_winner:
+                    p_winner['所持金'] = p_winner.get('所持金', 0) + prize
 
                 # Both get 2 Power Sources
                 for p in [p_winner, p_loser]:
-                    owned_raw = p.get('もちもの') or ''
-                    owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-                    owned.extend(["ちからのもと", "ちからのもと"])
-                    p['もちもの'] = ','.join(owned)
+                    if p:
+                        owned_raw = p.get('もちもの') or ''
+                        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+                        owned.extend(["ちからのもと", "ちからのもと"])
+                        p['もちもの'] = ','.join(owned)
+
+                # Damage calculation: Winner 1.3x, Loser 0.7x
+                winner_raw_dmg = active_battle.get(f"{winner_role.lower()}_damage", 0)
+                loser_raw_dmg = active_battle.get(f"{loser_role.lower()}_damage", 0)
+                if p_winner:
+                    p_winner['与ダメージ'] = p_winner.get('与ダメージ', 0) + int(round(winner_raw_dmg * 1.3))
+                if p_loser:
+                    p_loser['与ダメージ'] = p_loser.get('与ダメージ', 0) + int(round(loser_raw_dmg * 0.7))
 
                 save_players(players_data)
 
@@ -1945,6 +2028,8 @@ def admin_battle_start():
         "b_active_idx": 0,
         "a_selected_move": None,
         "b_selected_move": None,
+        "a_damage": 0,
+        "b_damage": 0,
         "a_swapped": False,
         "b_swapped": False,
         "swap_request": None,
@@ -2052,6 +2137,23 @@ def admin_battle_confirm_score():
 
 @app.route('/api/admin/battle/force_end', methods=['POST'])
 def admin_battle_force_end():
+    if active_battle.get("active"):
+        player_a_id = active_battle.get("player_a")
+        player_b_id = active_battle.get("player_b")
+        a_raw_dmg = active_battle.get("a_damage", 0)
+        b_raw_dmg = active_battle.get("b_damage", 0)
+
+        players_data = get_players()
+        p_a = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_a_id)), None)
+        p_b = next((p for p in players_data if check_user_id(p.get('ユーザid'), player_b_id)), None)
+
+        if p_a:
+            p_a['与ダメージ'] = p_a.get('与ダメージ', 0) + int(round(a_raw_dmg * 1.0))
+        if p_b:
+            p_b['与ダメージ'] = p_b.get('与ダメージ', 0) + int(round(b_raw_dmg * 1.0))
+
+        save_players(players_data)
+
     active_battle["active"] = False
     active_battle["player_a"] = None
     active_battle["player_b"] = None
@@ -2059,6 +2161,8 @@ def admin_battle_force_end():
     active_battle["b_pokemon"] = []
     active_battle["a_selected_move"] = None
     active_battle["b_selected_move"] = None
+    active_battle["a_damage"] = 0
+    active_battle["b_damage"] = 0
     active_battle["swap_request"] = None
     active_battle["target_player"] = None
     active_battle["scores"] = []
