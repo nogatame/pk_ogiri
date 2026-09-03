@@ -7,18 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+2:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="/static/js/env.js" onerror="this.remove()"></script>
-    <script>
-        const originalFetch = window.fetch;
-        window.fetch = function(url, options) {
-            let rawBaseUrl = window.ENV_API_BASE_URL || window.location.origin;
-            if (rawBaseUrl.endsWith('/')) rawBaseUrl = rawBaseUrl.slice(0, -1);
-            if (typeof url === 'string' && (url.startsWith('/api') || url.startsWith('/static'))) {
-                url = rawBaseUrl + url;
-            }
-            return originalFetch(url, options);
-        };
-    </script>
     <style>
         :root {
             --bg-color: #E1FFF1;

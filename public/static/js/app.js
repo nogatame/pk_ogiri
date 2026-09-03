@@ -1,12 +1,8 @@
 // Type chart loaded dynamically from JSON
 let TYPE_CHART = {};
 
-// Set API base URL dynamically (supports Vercel env override or current page origin)
-let rawBaseUrl = window.ENV_API_BASE_URL || window.location.origin;
-if (rawBaseUrl.endsWith('/')) {
-    rawBaseUrl = rawBaseUrl.slice(0, -1);
-}
-const API_BASE_URL = rawBaseUrl;
+// Set API base URL dynamically based on the current page origin
+const API_BASE_URL = window.location.origin;
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
