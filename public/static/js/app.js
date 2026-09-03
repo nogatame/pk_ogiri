@@ -2,7 +2,11 @@
 let TYPE_CHART = {};
 
 // Set API base URL dynamically (supports Vercel env override or current page origin)
-const API_BASE_URL = window.ENV_API_BASE_URL || window.location.origin;
+let rawBaseUrl = window.ENV_API_BASE_URL || window.location.origin;
+if (rawBaseUrl.endsWith('/')) {
+    rawBaseUrl = rawBaseUrl.slice(0, -1);
+}
+const API_BASE_URL = rawBaseUrl;
 
 // Override fetch to automatically include X-User-Id header if present
 const originalFetch = window.fetch;
@@ -10,8 +14,8 @@ window.fetch = function (url, options) {
     options = options || {};
     options.headers = options.headers || {};
 
-    // Automatically prepend ngrok base URL for absolute paths to Flask API
-    if (url.startsWith('/api') || url.startsWith('/static')) {
+    // Automatically prepend base URL for relative paths to Flask API
+    if (typeof url === 'string' && (url.startsWith('/api') || url.startsWith('/static'))) {
         url = API_BASE_URL + url;
     }
 
