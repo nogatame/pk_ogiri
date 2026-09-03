@@ -98,6 +98,10 @@ def get_kv_credentials():
     token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
     return url, token
 
+def get_battle_state_kv_key():
+    room_id = os.environ.get('ROOM_ID', 'default').strip()
+    return f"battle_state_{room_id}"
+
 def load_battle_state():
     global battle_waiting_players, grading_viewers, active_battle
     
@@ -107,7 +111,8 @@ def load_battle_state():
         try:
             url = KV_REST_API_URL.rstrip('/')
             headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
-            res = requests.post(url, headers=headers, json=["GET", "battle_state"])
+            key = get_battle_state_kv_key()
+            res = requests.post(url, headers=headers, json=["GET", key])
             if res.status_code == 200:
                 result = res.json().get('result')
                 if result:
@@ -157,7 +162,8 @@ def save_battle_state():
                 "grading_viewers": list(grading_viewers),
                 "active_battle": active_battle
             }
-            res = requests.post(url, headers=headers, json=["SET", "battle_state", json.dumps(data, ensure_ascii=False)])
+            key = get_battle_state_kv_key()
+            res = requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)])
             if res.status_code == 200:
                 return
         except Exception as e:
