@@ -126,17 +126,76 @@ def get_battle_state_kv_key():
     room_id = os.environ.get('ROOM_ID', 'default').strip()
     return f"battle_state_{room_id}"
 
+import sqlite3
+
+def get_sqlite_db_path():
+    room_id = os.environ.get('ROOM_ID', 'default').strip()
+    return f"/tmp/battle_state_{room_id}.db"
+
+def init_sqlite_db():
+    db_path = get_sqlite_db_path()
+    try:
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS state (key TEXT PRIMARY KEY, value TEXT)''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"SQLite init error: {e}")
+
+def load_battle_state_sqlite():
+    db_path = get_sqlite_db_path()
+    if not os.path.exists(db_path):
+        return False
+    try:
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute("SELECT value FROM state WHERE key='data'")
+        row = c.fetchone()
+        conn.close()
+        if row and row[0]:
+            data = json.loads(row[0])
+            battle_waiting_players.clear()
+            battle_waiting_players.update(data.get("waiting_players", []))
+            grading_viewers.clear()
+            grading_viewers.update(data.get("grading_viewers", []))
+            active_battle.clear()
+            active_battle.update(data.get("active_battle", {}))
+            return True
+    except Exception as e:
+        print(f"SQLite load error: {e}")
+    return False
+
+def save_battle_state_sqlite():
+    db_path = get_sqlite_db_path()
+    try:
+        init_sqlite_db()
+        data = {
+            "waiting_players": list(battle_waiting_players),
+            "grading_viewers": list(grading_viewers),
+            "active_battle": active_battle
+        }
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO state (key, value) VALUES ('data', ?)", (json.dumps(data, ensure_ascii=False),))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"SQLite save error: {e}")
+    return False
+
 def load_battle_state():
     global battle_waiting_players, grading_viewers, active_battle
     
-    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    # 1. Try Vercel KV REST API first (if credentials are set and working)
     KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
     if KV_REST_API_URL and KV_REST_API_TOKEN:
         try:
             url = KV_REST_API_URL.rstrip('/')
             headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
             key = get_battle_state_kv_key()
-            res = requests.post(url, headers=headers, json=["GET", key], timeout=1.5)
+            res = requests.post(url, headers=headers, json=["GET", key], timeout=1.0)
             if res.status_code == 200:
                 result = res.json().get('result')
                 if result:
@@ -149,9 +208,13 @@ def load_battle_state():
                     active_battle.update(data.get("active_battle", {}))
                     return
         except Exception as e:
-            print(f"Failed to load from Vercel KV: {e}")
-            
-    # 2. Fallback to local JSON file (for local development)
+            pass
+
+    # 2. Fallback to /tmp SQLite DB (Instant & guaranteed for Vercel functions)
+    if load_battle_state_sqlite():
+        return
+
+    # 3. Fallback to local JSON file (for local development)
     if not os.path.exists(BATTLE_STATE_JSON_PATH):
         try:
             save_battle_state()
@@ -170,12 +233,15 @@ def load_battle_state():
             active_battle.clear()
             active_battle.update(data.get("active_battle", {}))
             return
-        except Exception as e:
+        except Exception:
             time.sleep(0.01)
-    print("Warning: Failed to load battle state from file (Vercel / read-only filesystem fallback to memory).")
 
 def save_battle_state():
-    # 1. Try Vercel KV REST API first (if credentials are set on Vercel)
+    # 1. Try REDIS_URL via official redis client first
+    if save_battle_state_redis():
+        return
+
+    # 2. Try Vercel KV REST API
     KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
     if KV_REST_API_URL and KV_REST_API_TOKEN:
         try:
@@ -187,29 +253,52 @@ def save_battle_state():
                 "active_battle": active_battle
             }
             key = get_battle_state_kv_key()
-            res = requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)], timeout=1.5)
+            res = requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)], timeout=1.0)
             if res.status_code == 200:
                 return
-        except Exception as e:
-            print(f"Failed to save to Vercel KV: {e}")
+        except Exception:
+            pass
 
-    # 2. Fallback to local JSON file (for local development)
-    import time
+    # 3. Fallback to /tmp SQLite DB
+    if save_battle_state_sqlite():
+        return
+
+    # 4. Fallback to local JSON file
     data = {
         "waiting_players": list(battle_waiting_players),
         "grading_viewers": list(grading_viewers),
         "active_battle": active_battle
     }
     temp_path = BATTLE_STATE_JSON_PATH + '.tmp'
+    import time
     for _ in range(5):
         try:
             with open(temp_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
             os.replace(temp_path, BATTLE_STATE_JSON_PATH)
             return
-        except Exception as e:
+        except Exception:
             time.sleep(0.01)
     print("Warning: Failed to save battle state to file (Vercel / read-only filesystem fallback to memory).")
+
+@app.route('/api/admin/debug_kv', methods=['GET'])
+def debug_kv():
+    r = get_redis_client()
+    if r:
+        try:
+            pong = r.ping()
+            return jsonify({
+                "status": "connected_via_redis_url",
+                "ping": pong,
+                "redis_url_exists": True
+            })
+        except Exception as e:
+            return jsonify({"status": "redis_error", "error": str(e)})
+
+    return jsonify({
+        "status": "no_redis_url",
+        "REDIS_URL_exists": os.environ.get('REDIS_URL') is not None
+    })
 
 @app.before_request
 def before_request():
