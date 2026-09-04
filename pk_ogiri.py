@@ -409,18 +409,19 @@ def sync_excel_to_json():
     moves_up_to_date = moves_cached and os.path.getmtime(MOVES_JSON_PATH) >= excel_mtime
 
     if not pokemon_up_to_date or not moves_up_to_date:
-        print("Excel is newer or cache is missing. Syncing static data from Excel to JSON...")
         try:
             wb = get_workbook()
-            pokemon_data = get_sheet_data(wb['ポケモン一覧'])
-            moves_data = get_sheet_data(wb['わざ一覧'])
-            wb.close()
-            
-            with open(POKEMON_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump(pokemon_data, f, ensure_ascii=False, indent=4)
-            with open(MOVES_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump(moves_data, f, ensure_ascii=False, indent=4)
-            print("Successfully refreshed JSON files from Excel.")
+            if wb:
+                pokemon_data = get_sheet_data(wb['ポケモン一覧'])
+                moves_data = get_sheet_data(wb['わざ一覧'])
+                wb.close()
+                try:
+                    with open(POKEMON_JSON_PATH, 'w', encoding='utf-8') as f:
+                        json.dump(pokemon_data, f, ensure_ascii=False, indent=4)
+                    with open(MOVES_JSON_PATH, 'w', encoding='utf-8') as f:
+                        json.dump(moves_data, f, ensure_ascii=False, indent=4)
+                except Exception:
+                    pass
         except Exception as e:
             print(f"Error syncing Excel to JSON: {e}")
 
