@@ -98,6 +98,88 @@ def get_timer_info():
 
 BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
 
+def get_kv_credentials():
+    url = os.environ.get('KV_REST_API_URL') or os.environ.get('UPSTASH_REDIS_REST_URL')
+    token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+    return url, token
+
+def get_battle_state_kv_key():
+    room_id = os.environ.get('ROOM_ID', 'default').strip()
+    return f"battle_state_{room_id}"
+
+def load_battle_state():
+    global battle_waiting_players, grading_viewers, active_battle
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            key = get_battle_state_kv_key()
+            res = requests.post(url, headers=headers, json=["GET", key], timeout=1.5)
+            if res.status_code == 200:
+                result = res.json().get('result')
+                if result:
+                    data = json.loads(result) if isinstance(result, str) else result
+                    battle_waiting_players.clear()
+                    battle_waiting_players.update(data.get("waiting_players", []))
+                    grading_viewers.clear()
+                    grading_viewers.update(data.get("grading_viewers", []))
+                    active_battle.clear()
+                    active_battle.update(data.get("active_battle", {}))
+                    return
+        except Exception as e:
+            print(f"KV load error: {e}")
+
+    # Fallback to local file if exists
+    if os.path.exists(BATTLE_STATE_JSON_PATH):
+        try:
+            with open(BATTLE_STATE_JSON_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            battle_waiting_players.clear()
+            battle_waiting_players.update(data.get("waiting_players", []))
+            grading_viewers.clear()
+            grading_viewers.update(data.get("grading_viewers", []))
+            active_battle.clear()
+            active_battle.update(data.get("active_battle", {}))
+        except Exception:
+            pass
+
+def save_battle_state():
+    KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
+    if KV_REST_API_URL and KV_REST_API_TOKEN:
+        try:
+            url = KV_REST_API_URL.rstrip('/')
+            headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
+            data = {
+                "waiting_players": list(battle_waiting_players),
+                "grading_viewers": list(grading_viewers),
+                "active_battle": active_battle
+            }
+            key = get_battle_state_kv_key()
+            requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)], timeout=1.5)
+            return
+        except Exception as e:
+            print(f"KV save error: {e}")
+
+    # Fallback to file if writable
+    try:
+        data = {
+            "waiting_players": list(battle_waiting_players),
+            "grading_viewers": list(grading_viewers),
+            "active_battle": active_battle
+        }
+        with open(BATTLE_STATE_JSON_PATH, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+@app.before_request
+def before_request_hook():
+    try:
+        load_battle_state()
+    except Exception:
+        pass
+
 previous_battle_state = None
 previous_players_state = None
 
