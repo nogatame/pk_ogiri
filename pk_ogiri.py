@@ -96,7 +96,26 @@ BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__))
 def get_kv_credentials():
     url = os.environ.get('KV_REST_API_URL') or os.environ.get('UPSTASH_REDIS_REST_URL')
     token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
-    return url, token
+    
+    if url and token:
+        return url, token
+
+    # Support standard Vercel REDIS_URL format (rediss://default:PASSWORD@HOST:PORT)
+    redis_url = os.environ.get('REDIS_URL')
+    if redis_url:
+        try:
+            # Parse rediss://default:TOKEN@HOST:PORT or redis://default:TOKEN@HOST:PORT
+            clean_url = redis_url.replace('rediss://', '').replace('redis://', '')
+            if '@' in clean_url:
+                user_pass, host_port = clean_url.split('@', 1)
+                token = user_pass.split(':', 1)[1] if ':' in user_pass else user_pass
+                host = host_port.split(':', 1)[0]
+                url = f"https://{host}"
+                return url, token
+        except Exception as e:
+            print(f"Failed to parse REDIS_URL: {e}")
+
+    return None, None
 
 def get_battle_state_kv_key():
     room_id = os.environ.get('ROOM_ID', 'default').strip()
