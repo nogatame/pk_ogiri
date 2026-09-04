@@ -131,7 +131,7 @@ def load_battle_state():
             url = KV_REST_API_URL.rstrip('/')
             headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
             key = get_battle_state_kv_key()
-            res = requests.post(url, headers=headers, json=["GET", key])
+            res = requests.post(url, headers=headers, json=["GET", key], timeout=1.5)
             if res.status_code == 200:
                 result = res.json().get('result')
                 if result:
@@ -182,7 +182,7 @@ def save_battle_state():
                 "active_battle": active_battle
             }
             key = get_battle_state_kv_key()
-            res = requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)])
+            res = requests.post(url, headers=headers, json=["SET", key, json.dumps(data, ensure_ascii=False)], timeout=1.5)
             if res.status_code == 200:
                 return
         except Exception as e:
