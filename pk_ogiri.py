@@ -99,8 +99,16 @@ def get_timer_info():
 BATTLE_STATE_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'battle_state.json')
 
 def get_kv_credentials():
-    url = os.environ.get('KV_REST_API_URL') or os.environ.get('UPSTASH_REDIS_REST_URL')
-    token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+    url = (os.environ.get('KV_REST_API_URL') or 
+           os.environ.get('VERCEL_KV_REST_API_URL') or 
+           os.environ.get('UPSTASH_REDIS_REST_URL') or 
+           os.environ.get('REDIS_REST_URL'))
+           
+    token = (os.environ.get('KV_REST_API_TOKEN') or 
+             os.environ.get('VERCEL_KV_REST_API_TOKEN') or 
+             os.environ.get('UPSTASH_REDIS_REST_TOKEN') or 
+             os.environ.get('REDIS_REST_TOKEN'))
+             
     return url, token
 
 def get_battle_state_kv_key():
