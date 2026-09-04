@@ -285,7 +285,10 @@ def debug_kv():
 
 @app.before_request
 def before_request():
-    load_battle_state()
+    try:
+        load_battle_state()
+    except Exception:
+        pass
 
 previous_battle_state = None
 previous_players_state = None
