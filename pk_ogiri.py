@@ -207,14 +207,14 @@ def load_battle_state():
                     active_battle.clear()
                     active_battle.update(data.get("active_battle", {}))
                     return
-        except Exception as e:
+        except Exception:
             pass
 
-    # 2. Fallback to /tmp SQLite DB (Instant & guaranteed for Vercel functions)
+    # 2. Fallback to /tmp SQLite DB
     if load_battle_state_sqlite():
         return
 
-    # 3. Fallback to local JSON file (for local development)
+    # 3. Fallback to local JSON file
     if not os.path.exists(BATTLE_STATE_JSON_PATH):
         try:
             save_battle_state()
@@ -237,11 +237,7 @@ def load_battle_state():
             time.sleep(0.01)
 
 def save_battle_state():
-    # 1. Try REDIS_URL via official redis client first
-    if save_battle_state_redis():
-        return
-
-    # 2. Try Vercel KV REST API
+    # 1. Try Vercel KV REST API
     KV_REST_API_URL, KV_REST_API_TOKEN = get_kv_credentials()
     if KV_REST_API_URL and KV_REST_API_TOKEN:
         try:
@@ -259,11 +255,10 @@ def save_battle_state():
         except Exception:
             pass
 
-    # 3. Fallback to /tmp SQLite DB
-    if save_battle_state_sqlite():
-        return
+    # 2. Fallback to /tmp SQLite DB
+    save_battle_state_sqlite()
 
-    # 4. Fallback to local JSON file
+    # 3. Fallback to local JSON file
     data = {
         "waiting_players": list(battle_waiting_players),
         "grading_viewers": list(grading_viewers),
@@ -279,24 +274,12 @@ def save_battle_state():
             return
         except Exception:
             time.sleep(0.01)
-    print("Warning: Failed to save battle state to file (Vercel / read-only filesystem fallback to memory).")
 
 @app.route('/api/admin/debug_kv', methods=['GET'])
 def debug_kv():
-    r = get_redis_client()
-    if r:
-        try:
-            pong = r.ping()
-            return jsonify({
-                "status": "connected_via_redis_url",
-                "ping": pong,
-                "redis_url_exists": True
-            })
-        except Exception as e:
-            return jsonify({"status": "redis_error", "error": str(e)})
-
     return jsonify({
-        "status": "no_redis_url",
+        "status": "ready",
+        "room_id": os.environ.get('ROOM_ID', 'default'),
         "REDIS_URL_exists": os.environ.get('REDIS_URL') is not None
     })
 
