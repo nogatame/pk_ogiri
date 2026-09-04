@@ -10,6 +10,11 @@ app = Flask(__name__, template_folder='templates', static_folder='public/static'
 CORS(app)
 app.secret_key = 'pk_ogiri_secret_key_13579'
 
+def get_kv_credentials():
+    url = os.environ.get('KV_REST_API_URL') or os.environ.get('UPSTASH_REDIS_REST_URL')
+    token = os.environ.get('KV_REST_API_TOKEN') or os.environ.get('UPSTASH_REDIS_REST_TOKEN')
+    return url, token
+
 def get_current_user_id():
     user_id = request.headers.get('X-User-Id')
     if user_id and str(user_id).strip():
@@ -1213,6 +1218,91 @@ def batch_approve_csv():
         "message": msg,
         "success_count": success_count,
         "errors": errors
+    })
+
+@app.route('/api/admin/players_list', methods=['GET'])
+def admin_players_list():
+    players = get_players()
+    result = []
+    for p in players:
+        result.append({
+            "user_id": p.get('ユーザid'),
+            "name": p.get('名前', '')
+        })
+    return jsonify({"success": True, "players": result})
+
+@app.route('/api/admin/export_player', methods=['GET'])
+def admin_export_player():
+    user_id = request.args.get('user_id', '').strip()
+    players = get_players()
+    if user_id:
+        target = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
+        if not target:
+            return jsonify({"success": False, "message": "指定されたユーザーが見つかりません。"}), 404
+        return jsonify({"success": True, "player_data": target})
+    else:
+        return jsonify({"success": True, "players_data": players})
+
+@app.route('/api/admin/import_player', methods=['POST'])
+def admin_import_player():
+    data = request.json or {}
+    player_input = data.get('player_data')
+    
+    if not player_input:
+        return jsonify({"success": False, "message": "インポートするプレイヤーデータがありません。"}), 400
+
+    if isinstance(player_input, str):
+        try:
+            player_input = json.loads(player_input)
+        except Exception as e:
+            return jsonify({"success": False, "message": f"JSONのパースに失敗しました: {e}"}), 400
+
+    items_to_import = []
+    if isinstance(player_input, dict):
+        items_to_import.append(player_input)
+    elif isinstance(player_input, list):
+        items_to_import = player_input
+    else:
+        return jsonify({"success": False, "message": "無効なデータ形式です。"}), 400
+
+    players = get_players()
+    imported_count = 0
+    updated_ids = []
+
+    for p_item in items_to_import:
+        if not isinstance(p_item, dict):
+            continue
+        uid = p_item.get('ユーザid') or p_item.get('user_id')
+        if not uid:
+            continue
+        
+        # Standardize key to 'ユーザid'
+        p_item['ユーザid'] = str(uid)
+        
+        # Check if already exists in players list
+        found_idx = -1
+        for idx, p in enumerate(players):
+            if check_user_id(p.get('ユーザid'), uid):
+                found_idx = idx
+                break
+
+        if found_idx >= 0:
+            players[found_idx] = p_item
+        else:
+            players.append(p_item)
+
+        imported_count += 1
+        updated_ids.append(str(uid))
+
+    if imported_count == 0:
+        return jsonify({"success": False, "message": "有効なアカウントデータが見つかりませんでした (ユーザidが必要です)。"}), 400
+
+    save_players(players)
+
+    return jsonify({
+        "success": True,
+        "message": f"{imported_count}件のアカウント情報を正常に引っ越しました ({', '.join(updated_ids)})。",
+        "imported_ids": updated_ids
     })
 
 # Shop API: 装備

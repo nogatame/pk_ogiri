@@ -203,6 +203,36 @@
             </div>
         </div>
 
+        <div class="card" style="margin-bottom: 20px;">
+            <h2 style="margin-top: 0; font-size: 1.1rem; color: var(--text-muted);">✈️ アカウント引っ越し（移行）</h2>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Export section -->
+                <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 1rem; color: #60a5fa;">📤 1. アカウント情報の出力（移行元サーバー）</h3>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <label for="export-player-select" style="font-size: 0.9rem; color: var(--text-muted);">対象プレイヤー:</label>
+                        <select id="export-player-select" style="width: auto; min-width: 180px;">
+                            <option value="">全プレイヤー</option>
+                        </select>
+                        <button id="export-player-btn" class="btn" style="background-color: #6366f1;">アカウント情報(JSON)を出力</button>
+                    </div>
+                    <textarea id="export-json-output" rows="4" readonly placeholder="出力されたアカウントデータ(JSON)がここに表示されます..." style="width: 100%; box-sizing: border-box; background: #1e293b; color: #a7f3d0; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.85rem; resize: vertical;"></textarea>
+                    <div style="margin-top: 6px; display: flex; gap: 10px;">
+                        <button id="copy-export-json-btn" class="btn" style="background-color: #4b5563; font-size: 0.85rem; padding: 6px 12px;">📋 クリップボードにコピー</button>
+                    </div>
+                </div>
+
+                <!-- Import section -->
+                <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 1rem; color: #34d399;">📥 2. アカウント情報の入力（移行先サーバー）</h3>
+                    <textarea id="import-json-input" rows="4" placeholder="移行元サーバーで出力したアカウントデータ(JSONテキスト)をここに貼り付けてください..." style="width: 100%; box-sizing: border-box; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.85rem; resize: vertical;"></textarea>
+                    <div style="margin-top: 10px;">
+                        <button id="import-player-btn" class="btn" style="background-color: #10b981;">アカウントを引っ越し（インポート）</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <h2>待機中のユーザー一覧</h2>
             <div id="users-table-container">
@@ -363,7 +393,99 @@
             }
         }
 
-        document.getElementById('refresh-btn').addEventListener('click', fetchPendingUsers);
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            fetchPendingUsers();
+            fetchPlayersForExport();
+        });
+
+        // --- Account Migration Logic ---
+        async function fetchPlayersForExport() {
+            try {
+                const response = await fetch('/api/admin/players_list');
+                const data = await response.json();
+                if (data.success) {
+                    const select = document.getElementById('export-player-select');
+                    const currentVal = select.value;
+                    select.innerHTML = '<option value="">全プレイヤー</option>';
+                    data.players.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.user_id;
+                        opt.textContent = `${p.name || p.user_id} (${p.user_id})`;
+                        select.appendChild(opt);
+                    });
+                    select.value = currentVal;
+                }
+            } catch (err) {
+                console.error('Error fetching players list:', err);
+            }
+        }
+
+        document.getElementById('export-player-btn').addEventListener('click', async () => {
+            const selectedUserId = document.getElementById('export-player-select').value;
+            try {
+                const url = selectedUserId ? `/api/admin/export_player?user_id=${encodeURIComponent(selectedUserId)}` : '/api/admin/export_player';
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.success) {
+                    const outputData = selectedUserId ? data.player_data : data.players_data;
+                    document.getElementById('export-json-output').value = JSON.stringify(outputData, null, 2);
+                    showToast('アカウント情報を出力しました。');
+                } else {
+                    showToast(data.message || '出力に失敗しました。', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        });
+
+        document.getElementById('copy-export-json-btn').addEventListener('click', () => {
+            const outputEl = document.getElementById('export-json-output');
+            if (!outputEl.value.trim()) {
+                showToast('コピーするデータがありません。先にデータを出力してください。', false);
+                return;
+            }
+            outputEl.select();
+            navigator.clipboard.writeText(outputEl.value).then(() => {
+                showToast('クリップボードにコピーしました！');
+            }).catch(err => {
+                showToast('コピーに失敗しました。', false);
+            });
+        });
+
+        document.getElementById('import-player-btn').addEventListener('click', async () => {
+            const jsonInputText = document.getElementById('import-json-input').value.trim();
+            if (!jsonInputText) {
+                showToast('インポートするJSONデータを入力してください。', false);
+                return;
+            }
+            let parsed;
+            try {
+                parsed = JSON.parse(jsonInputText);
+            } catch (e) {
+                showToast('JSONフォーマットが無効です。正しいJSONデータを入力してください。', false);
+                return;
+            }
+            try {
+                const response = await fetch('/api/admin/import_player', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player_data: parsed })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showToast(data.message);
+                    document.getElementById('import-json-input').value = '';
+                    fetchPlayersForExport();
+                    fetchPendingUsers();
+                } else {
+                    showToast(data.message || 'インポートに失敗しました。', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('サーバーとの通信に失敗しました。', false);
+            }
+        });
 
         document.getElementById('export-csv-btn').addEventListener('click', () => {
             window.location.href = '/api/admin/export_wishes_csv';
@@ -1056,6 +1178,7 @@
 
         // Initial fetch
         fetchPendingUsers();
+        fetchPlayersForExport();
     </script>
 </body>
 </html>
