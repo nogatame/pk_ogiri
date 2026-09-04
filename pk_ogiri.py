@@ -795,23 +795,29 @@ def game_data():
 # Shop API: アイテム一覧
 @app.route('/api/items', methods=['GET'])
 def get_items_list():
-    user_id = get_current_user_id()
-    if not user_id:
-        return jsonify({"success": False, "message": "ログインしていません。"}), 401
-    items = get_items()
-    players = get_players()
-    player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), None)
-    if not player:
-        return jsonify({"success": False, "message": "ユーザーが見つかりません。"}), 400
-    owned_raw = player.get('もちもの') or ''
-    owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
-    return jsonify({
-        "success": True,
-        "items": items,
-        "money": player.get('所持金', 0),
-        "owned_items": owned,
-        "moves": get_moves_list()
-    })
+    try:
+        user_id = get_current_user_id()
+        items = get_items()
+        players = get_players()
+        player = next((p for p in players if check_user_id(p.get('ユーザid'), user_id)), {}) if user_id and players else {}
+        owned_raw = player.get('もちもの') or ''
+        owned = [i.strip() for i in str(owned_raw).split(',') if i.strip()]
+        return jsonify({
+            "success": True,
+            "items": items,
+            "money": player.get('所持金', 0),
+            "owned_items": owned,
+            "moves": get_moves_list()
+        })
+    except Exception as e:
+        print(f"Error in /api/items: {e}")
+        return jsonify({
+            "success": True,
+            "items": get_items(),
+            "money": 0,
+            "owned_items": [],
+            "moves": []
+        })
 
 
 # Shop API: 購入
