@@ -247,7 +247,12 @@ def calculate_battle_damage(attacker, defender, move):
 EXCEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pk_ogiri.xlsm')
 
 def get_workbook():
-    return openpyxl.load_workbook(EXCEL_PATH, read_only=True)
+    try:
+        if os.path.exists(EXCEL_PATH):
+            return openpyxl.load_workbook(EXCEL_PATH, read_only=True)
+    except Exception as e:
+        print(f"Failed to load excel: {e}")
+    return None
 
 def get_sheet_data(sheet):
     rows = list(sheet.iter_rows(values_only=True))
@@ -347,19 +352,7 @@ def load_players():
 
     # 2. Fallback to local JSON file
     if not os.path.exists(PLAYERS_JSON_PATH):
-        try:
-            wb = get_workbook()
-            data = get_sheet_data(wb['プレイヤーデータ'])
-            wb.close()
-            for p in data:
-                convert_player_format(p)
-            with open(PLAYERS_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-            return data
-        except Exception:
-            with open(PLAYERS_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump([], f, ensure_ascii=False, indent=4)
-            return []
+        return []
     else:
         try:
             with open(PLAYERS_JSON_PATH, 'r', encoding='utf-8') as f:
